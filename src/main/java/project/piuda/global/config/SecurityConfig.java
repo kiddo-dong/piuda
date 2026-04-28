@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import project.piuda.global.security.device.DeviceAuthFilter;
 import project.piuda.global.security.jwt.JwtAuthFilter;
 
@@ -31,8 +32,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/device/register").permitAll()
                         .requestMatchers("/api/device/**").authenticated()
                         .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/device/audio").authenticated()
                         .anyRequest().permitAll()
                 );
+        http.addFilterBefore(deviceAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }
