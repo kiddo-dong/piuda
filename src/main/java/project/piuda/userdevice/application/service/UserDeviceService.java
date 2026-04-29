@@ -25,6 +25,11 @@ public class UserDeviceService {
         Device device = deviceRepository.findByDeviceId(deviceId)
                 .orElseThrow(() -> new RuntimeException("디바이스 없음"));
 
+        userDeviceRepository.findByDevice(device)
+                .ifPresent(userDevice -> {
+                    throw new RuntimeException("이미 연결된 디바이스");
+                });
+
         userDeviceRepository.save(new UserDevice(user, device));
     }
 }

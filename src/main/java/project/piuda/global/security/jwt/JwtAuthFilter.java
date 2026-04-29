@@ -6,9 +6,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import project.piuda.global.security.principal.UserPrincipal;
 import project.piuda.user.domain.User;
 import project.piuda.user.domain.UserRepository;
 
@@ -31,13 +33,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
 
         // 로그인 / 회원가입은 패스
-        if (uri.equals("/api/user/login") || uri.equals("/api/user/signup")) {
+        if (uri.equals("/api/user/login") || uri.equals("/api/user/signup") || uri.equals("/api/auth/login")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // user API만 검사
-        if (!uri.startsWith("/api/user/")) {
+        if (!uri.startsWith("/api/user/") && !uri.startsWith("/api/auth/") && !uri.equals("/api/device/register")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -57,12 +58,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("유저 없음"));
 
+            UserPrincipal principal = new UserPrincipal(user.getId(), user.getEmail());
             UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(user, null, List.of());
+                    new UsernamePasswordAuthenticationToken(
+                            principal,
+                            null,
+                            List.of(new SimpleGrantedAuthority("USER"))
+                    );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (Exception e) {
+            SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }

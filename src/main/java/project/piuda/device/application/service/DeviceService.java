@@ -1,39 +1,59 @@
 package project.piuda.device.application.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.piuda.device.domain.Device;
 import project.piuda.device.domain.DeviceRepository;
+import project.piuda.global.security.principal.DevicePrincipal;
 
-import java.util.UUID;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
 public class DeviceService {
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final DeviceRepository deviceRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public String register(String deviceId) {
 
-        return deviceRepository.findByDeviceId(deviceId)
-                .map(Device::getDeviceKey)
-                .orElseGet(() -> {
-                    String key = UUID.randomUUID().toString();
-                    Device device = new Device(deviceId, key);
-                    deviceRepository.save(device);
-                    return key;
+        deviceRepository.findByDeviceId(deviceId)
+                .ifPresent(device -> {
+                    throw new RuntimeException("이미 등록된 디바이스");
                 });
+
+        String key = createDeviceSecret();
+        Device device = new Device(deviceId, passwordEncoder.encode(key));
+        deviceRepository.save(device);
+        return key;
     }
 
-    public Device validate(String deviceId, String deviceKey) {
+    public DevicePrincipal validate(String deviceId, String deviceKey) {
+        Device device = getByDeviceId(deviceId);
 
-        Device device = deviceRepository.findByDeviceId(deviceId)
-                .orElseThrow(() -> new RuntimeException("디바이스 없음"));
+        if (!device.isActive()) {
+            throw new RuntimeException("비활성화된 디바이스");
+        }
 
-        if (!device.getDeviceKey().equals(deviceKey)) {
+        if (!passwordEncoder.matches(deviceKey, device.getDeviceKeyHash())) {
             throw new RuntimeException("디바이스 인증 실패");
         }
 
-        return device;
+        return new DevicePrincipal(device.getId(), device.getDeviceId());
+    }
+
+    public Device getByDeviceId(String deviceId) {
+        return deviceRepository.findByDeviceId(deviceId)
+                .orElseThrow(() -> new RuntimeException("디바이스 없음"));
+    }
+
+    private String createDeviceSecret() {
+        byte[] bytes = new byte[32];
+        SECURE_RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }

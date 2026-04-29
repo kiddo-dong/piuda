@@ -18,10 +18,19 @@ public class Device {
     @Column(unique = true)
     private String deviceId; // ESP32 chipId (Hard Ware)
 
-    private String deviceKey;
+    @Column(nullable = false)
+    private String deviceKeyHash;
 
-    public Device(String deviceId, String deviceKey) {
+    @Enumerated(EnumType.STRING)
+    private DeviceStatus status = DeviceStatus.ACTIVE;
+
+    public Device(String deviceId, String deviceKeyHash) {
         this.deviceId = deviceId;
-        this.deviceKey = deviceKey;
+        this.deviceKeyHash = deviceKeyHash;
+        this.status = DeviceStatus.ACTIVE;
+    }
+
+    public boolean isActive() {
+        return status == DeviceStatus.ACTIVE;
     }
 }

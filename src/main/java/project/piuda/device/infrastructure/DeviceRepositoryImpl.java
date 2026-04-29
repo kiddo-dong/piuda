@@ -19,6 +19,11 @@ public class DeviceRepositoryImpl implements DeviceRepository {
     }
 
     @Override
+    public Optional<Device> findById(Long id) {
+        return jpaDeviceRepository.findById(id);
+    }
+
+    @Override
     public Optional<Device> findByDeviceId(String deviceId) {
         return jpaDeviceRepository.findByDeviceId(deviceId);
     }

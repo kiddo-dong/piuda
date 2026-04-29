@@ -6,5 +6,7 @@ public interface DeviceRepository {
 
     Device save(Device device);
 
+    Optional<Device> findById(Long id);
+
     Optional<Device> findByDeviceId(String deviceId);
 }

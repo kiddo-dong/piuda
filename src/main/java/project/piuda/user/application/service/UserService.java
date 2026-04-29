@@ -1,6 +1,7 @@
 package project.piuda.user.application.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.piuda.user.domain.User;
 import project.piuda.user.domain.UserRepository;
@@ -10,6 +11,7 @@ import project.piuda.user.domain.UserRepository;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public void signup(String email, String password) {
 
@@ -18,7 +20,7 @@ public class UserService {
                     throw new RuntimeException("이미 존재하는 이메일");
                 });
 
-        User user = new User(email, password);
+        User user = new User(email, passwordEncoder.encode(password));
         userRepository.save(user);
     }
 
@@ -27,7 +29,7 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("유저 없음"));
 
-        if (!user.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("비밀번호 틀림");
         }
 
