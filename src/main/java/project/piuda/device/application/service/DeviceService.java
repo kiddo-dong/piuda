@@ -3,6 +3,7 @@ package project.piuda.device.application.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import project.piuda.device.application.dto.DeviceResponse;
 import project.piuda.device.domain.Device;
 import project.piuda.device.domain.DeviceRepository;
 import project.piuda.global.security.principal.DevicePrincipal;
@@ -49,6 +50,13 @@ public class DeviceService {
     public Device getByDeviceId(String deviceId) {
         return deviceRepository.findByDeviceId(deviceId)
                 .orElseThrow(() -> new RuntimeException("디바이스 없음"));
+    }
+
+    public DeviceResponse getDeviceResponse(Long devicePk) {
+        Device device = deviceRepository.findById(devicePk)
+                .orElseThrow(() -> new RuntimeException("디바이스 없음"));
+
+        return DeviceResponse.from(device);
     }
 
     private String createDeviceSecret() {

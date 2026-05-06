@@ -3,12 +3,15 @@ package project.piuda.device.presentation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import project.piuda.device.application.dto.DeviceResponse;
 import project.piuda.device.application.service.DeviceService;
 import project.piuda.global.dto.ApiResponse;
+import project.piuda.global.security.principal.DevicePrincipal;
 import project.piuda.global.security.principal.UserPrincipal;
 import project.piuda.userdevice.application.service.UserDeviceService;
 
@@ -31,5 +34,15 @@ public class DeviceController {
         userDeviceService.connect(user.id(), deviceId);
 
         return ResponseEntity.ok(ApiResponse.success(key));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<DeviceResponse>> me(@AuthenticationPrincipal DevicePrincipal device) {
+        return ResponseEntity.ok(ApiResponse.success(deviceService.getDeviceResponse(device.id())));
+    }
+
+    @PostMapping("/ping")
+    public ResponseEntity<ApiResponse<DeviceResponse>> ping(@AuthenticationPrincipal DevicePrincipal device) {
+        return ResponseEntity.ok(ApiResponse.success(deviceService.getDeviceResponse(device.id())));
     }
 }
