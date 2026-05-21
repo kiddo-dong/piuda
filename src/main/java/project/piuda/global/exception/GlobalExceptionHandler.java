@@ -3,15 +3,17 @@ package project.piuda.global.exception;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import project.piuda.global.dto.ApiResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-        return ResponseEntity
-                .status(500)
-                .body(ApiResponse.fail(e.getMessage()));
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity.internalServerError().body("서버 내부 오류가 발생했습니다: " + e.getMessage());
     }
 }
