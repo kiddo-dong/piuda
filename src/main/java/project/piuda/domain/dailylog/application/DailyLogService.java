@@ -33,7 +33,7 @@ public class DailyLogService {
 
         // 조건 검증: 간병인(CAREGIVER)이 아닌데 정서 지원 시간을 적은 경우 차단
         if (!"CAREGIVER".equals(writer.getRole().name()) && request.getEmotionalCommunicationMinutes() > 0) {
-            throw new IllegalArgumentException("정서 지원(의사소통 도움) 항목은 간병인 권한만 기입할 수 있습니다.");
+            throw new IllegalArgumentException("정서 지원(의사소통 도움) 항목은 간병인만 기입할 수 있습니다.");
         }
 
         DailyLog dailyLog = DailyLog.builder()
