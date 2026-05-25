@@ -1,5 +1,8 @@
 package project.piuda.domain.dailylog.application;
 
+import project.piuda.domain.calendar.domain.CalendarType;
+import project.piuda.domain.calendar.domain.CareCalendar;
+import project.piuda.domain.calendar.domain.CareCalendarRepository;
 import project.piuda.domain.dailylog.application.dto.DailyLogRequest;
 import project.piuda.domain.dailylog.application.dto.DailyLogResponse;
 import project.piuda.domain.dailylog.domain.DailyLog;
@@ -22,6 +25,7 @@ public class DailyLogService {
     private final DailyLogRepository dailyLogRepository;
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
+    private final CareCalendarRepository careCalendarRepository;
 
     // 1. 일지 등록
     @Transactional
@@ -63,7 +67,22 @@ public class DailyLogService {
                 .specialNotes(request.getSpecialNotes())
                 .build();
 
-        return dailyLogRepository.save(dailyLog).getId();
+        DailyLog savedLog = dailyLogRepository.save(dailyLog);
+
+        // 하루 일지가 저장될 때, 공유 캘린더 테이블에도 DAILY_LOG 유형으로 자동 스탬프를 찍어줌
+        CareCalendar autoCalendarStamp = CareCalendar.builder()
+                .patient(patient)
+                .writer(writer)
+                .dailyLog(savedLog) // 생성된 일지 연결
+                .title(writer.getName() + "님의 하루 일지 작성 완료") // 캘린더 표기용 타이틀
+                .calendarType(CalendarType.DAILY_LOG) // 자동 생성 타입 지정
+                .startTime(request.getLogDate().atTime(request.getStartTime())) // 일지 시작 시각 연동
+                .endTime(request.getLogDate().atTime(request.getEndTime()))     // 일지 종료 시각 연동
+                .build();
+
+        careCalendarRepository.save(autoCalendarStamp);
+
+        return savedLog.getId();
     }
 
     // 2. 환자별 일지 목록 조회
@@ -88,7 +107,7 @@ public class DailyLogService {
         User writer = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        // ★ 수정 시에도 간병인 권한 체크 검증
+        // 수정 시에도 간병인 권한 체크 검증
         if (!"CAREGIVER".equals(writer.getRole().name()) && request.getEmotionalCommunicationMinutes() > 0) {
             throw new IllegalArgumentException("정서 지원(의사소통 도움) 항목은 간병인 권한만 기입할 수 있습니다.");
         }
