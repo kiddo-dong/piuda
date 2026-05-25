@@ -1,12 +1,12 @@
 package project.piuda.domain.dailylog.application;
 
-import project.piuda.domain.calendar.domain.CalendarType;
-import project.piuda.domain.calendar.domain.CareCalendar;
-import project.piuda.domain.calendar.domain.CareCalendarRepository;
 import project.piuda.domain.dailylog.application.dto.DailyLogRequest;
 import project.piuda.domain.dailylog.application.dto.DailyLogResponse;
 import project.piuda.domain.dailylog.domain.DailyLog;
 import project.piuda.domain.dailylog.domain.DailyLogRepository;
+import project.piuda.domain.calendar.domain.CareCalendar; // ★ 캘린더 연동용 추가
+import project.piuda.domain.calendar.domain.CareCalendarRepository; // ★ 캘린더 연동용 추가
+import project.piuda.domain.calendar.domain.CalendarType; // ★ 캘린더 연동용 추가
 import project.piuda.domain.patient.domain.Patient;
 import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.domain.user.domain.User;
@@ -25,9 +25,9 @@ public class DailyLogService {
     private final DailyLogRepository dailyLogRepository;
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
-    private final CareCalendarRepository careCalendarRepository;
+    private final CareCalendarRepository careCalendarRepository; // ★ 캘린더 연동을 위해 주입 추가!
 
-    // 1. 일지 등록
+    // 1. 일지 등록 (+ 캘린더 자동 연동)
     @Transactional
     public Long createDailyLog(Long patientId, String userEmail, DailyLogRequest request) {
         Patient patient = patientRepository.findById(patientId)
@@ -35,9 +35,8 @@ public class DailyLogService {
         User writer = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        // 조건 검증: 간병인(CAREGIVER)이 아닌데 정서 지원 시간을 적은 경우 차단
         if (!"CAREGIVER".equals(writer.getRole().name()) && request.getEmotionalCommunicationMinutes() > 0) {
-            throw new IllegalArgumentException("정서 지원(의사소통 도움) 항목은 간병인만 기입할 수 있습니다.");
+            throw new IllegalArgumentException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
         }
 
         DailyLog dailyLog = DailyLog.builder()
@@ -65,19 +64,20 @@ public class DailyLogService {
                 .bowelIncontinenceCount(request.getBowelIncontinenceCount())
                 .urineIncontinenceCount(request.getUrineIncontinenceCount())
                 .specialNotes(request.getSpecialNotes())
+                .imageUrl(request.getImageUrl()) // ★ [추가] 엔티티에 사진 주소 세팅
                 .build();
 
         DailyLog savedLog = dailyLogRepository.save(dailyLog);
 
-        // 하루 일지가 저장될 때, 공유 캘린더 테이블에도 DAILY_LOG 유형으로 자동 스탬프를 찍어줌
+        // 🔗 [캘린더 기획 연동] 일지 작성 완료 시, 공유 달력 화면에 자동 도장(DAILY_LOG 타입)을 찍어줍니다.
         CareCalendar autoCalendarStamp = CareCalendar.builder()
                 .patient(patient)
                 .writer(writer)
-                .dailyLog(savedLog) // 생성된 일지 연결
-                .title(writer.getName() + "님의 하루 일지 작성 완료") // 캘린더 표기용 타이틀
-                .calendarType(CalendarType.DAILY_LOG) // 자동 생성 타입 지정
-                .startTime(request.getLogDate().atTime(request.getStartTime())) // 일지 시작 시각 연동
-                .endTime(request.getLogDate().atTime(request.getEndTime()))     // 일지 종료 시각 연동
+                .dailyLog(savedLog) // 생성된 일지 외래키 매핑
+                .title(writer.getName() + "님의 하루 일지 작성 완료")
+                .calendarType(CalendarType.DAILY_LOG) // 자동 마크 타입
+                .startTime(request.getLogDate().atTime(request.getStartTime()))
+                .endTime(request.getLogDate().atTime(request.getEndTime()))
                 .build();
 
         careCalendarRepository.save(autoCalendarStamp);
@@ -107,9 +107,8 @@ public class DailyLogService {
         User writer = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        // 수정 시에도 간병인 권한 체크 검증
         if (!"CAREGIVER".equals(writer.getRole().name()) && request.getEmotionalCommunicationMinutes() > 0) {
-            throw new IllegalArgumentException("정서 지원(의사소통 도움) 항목은 간병인 권한만 기입할 수 있습니다.");
+            throw new IllegalArgumentException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
         }
 
         log.update(
@@ -122,7 +121,8 @@ public class DailyLogService {
                 request.isHouseholdPersonalHelp(), request.getHouseholdTotalMinutes(),
                 request.getPhysicalFunctionTrend(), request.getMealFunctionTrend(),
                 request.getBowelIncontinenceCount(), request.getUrineIncontinenceCount(),
-                request.getSpecialNotes()
+                request.getSpecialNotes(),
+                request.getImageUrl() // ★ [추가] 엔티티 수정 파라미터 연동
         );
     }
 

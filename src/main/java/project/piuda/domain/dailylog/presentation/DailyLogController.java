@@ -17,7 +17,7 @@ public class DailyLogController {
 
     private final DailyLogService dailyLogService;
 
-    // 1. 하루 일지 작성 (환자 ID 기반)
+    // 1. 하루 일지 작성 (작성 즉시 달력 도장 연동)
     @PostMapping("/patients/{patientId}/daily-logs")
     public ResponseEntity<Long> createDailyLog(
             @PathVariable Long patientId,

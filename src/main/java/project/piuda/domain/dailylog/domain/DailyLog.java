@@ -74,6 +74,10 @@ public class DailyLog {
     @Column(columnDefinition = "TEXT")
     private String specialNotes;
 
+    // 10. 앱에서 촬영하거나 업로드한 사진의 저장 경로 URL -> 갤러리 기능
+    @Column(length = 512)
+    private String imageUrl;
+
     @Builder
     public DailyLog(Patient patient, User writer, LocalDate logDate, LocalTime startTime, LocalTime endTime,
                     boolean physicalHygiene, boolean physicalBath, boolean physicalMealHelp, boolean physicalPositionChange,
@@ -81,7 +85,7 @@ public class DailyLog {
                     int cognitiveStimulationMinutes, int cognitiveLifeTogetherMinutes, int cognitiveBehaviorManagementMinutes,
                     int emotionalCommunicationMinutes, boolean householdMealClean, boolean householdPersonalHelp,
                     int householdTotalMinutes, HealthTrend physicalFunctionTrend, HealthTrend mealFunctionTrend,
-                    int bowelIncontinenceCount, int urineIncontinenceCount, String specialNotes) {
+                    int bowelIncontinenceCount, int urineIncontinenceCount, String specialNotes, String imageUrl) {
         this.patient = patient;
         this.writer = writer;
         this.logDate = logDate;
@@ -106,6 +110,7 @@ public class DailyLog {
         this.bowelIncontinenceCount = bowelIncontinenceCount;
         this.urineIncontinenceCount = urineIncontinenceCount;
         this.specialNotes = specialNotes;
+        this.imageUrl = imageUrl;
     }
 
     // 수정 비즈니스 로직
@@ -115,7 +120,7 @@ public class DailyLog {
                        int cognitiveLifeTogetherMinutes, int cognitiveBehaviorManagementMinutes,
                        int emotionalCommunicationMinutes, boolean householdMealClean, boolean householdPersonalHelp,
                        int householdTotalMinutes, HealthTrend physicalFunctionTrend, HealthTrend mealFunctionTrend,
-                       int bowelIncontinenceCount, int urineIncontinenceCount, String specialNotes) {
+                       int bowelIncontinenceCount, int urineIncontinenceCount, String specialNotes, String imageUrl) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.physicalHygiene = physicalHygiene;
@@ -137,5 +142,6 @@ public class DailyLog {
         this.bowelIncontinenceCount = bowelIncontinenceCount;
         this.urineIncontinenceCount = urineIncontinenceCount;
         this.specialNotes = specialNotes;
+        this.imageUrl = imageUrl;
     }
 }

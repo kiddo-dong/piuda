@@ -34,6 +34,7 @@ public class DailyLogResponse {
     private final int bowelIncontinenceCount;
     private final int urineIncontinenceCount;
     private final String specialNotes;
+    private final String imageUrl;
 
     public DailyLogResponse(DailyLog log) {
         this.id = log.getId();
@@ -62,5 +63,6 @@ public class DailyLogResponse {
         this.bowelIncontinenceCount = log.getBowelIncontinenceCount();
         this.urineIncontinenceCount = log.getUrineIncontinenceCount();
         this.specialNotes = log.getSpecialNotes();
+        this.imageUrl = log.getImageUrl();
     }
 }

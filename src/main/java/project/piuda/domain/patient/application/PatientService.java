@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.device.domain.Device;
 import project.piuda.domain.device.domain.DeviceRepository;
-import project.piuda.domain.memorybook.domain.MemoryBook;
-import project.piuda.domain.memorybook.domain.MemoryBookRepository;
+import project.piuda.domain.patientmemory.domain.PatientMemory;
+import project.piuda.domain.patientmemory.domain.PatientMemoryRepository;
 import project.piuda.domain.patient.application.dto.PatientRegisterRequest;
 import project.piuda.domain.patient.application.dto.PatientResponse;
 import project.piuda.domain.patient.domain.Patient;
@@ -27,7 +27,7 @@ public class PatientService {
     private final UserRepository userRepository;
     private final PatientMemberRepository patientMemberRepository;
     private final PatientMapper patientMapper;
-    private final MemoryBookRepository memoryBookRepository;
+    private final PatientMemoryRepository patientMemoryRepository;
 
     /**
      * 환자에게 IoT 디바이스 기기를 연동하는 흐름
@@ -64,10 +64,10 @@ public class PatientService {
         Patient savedPatient = patientRepository.save(patient);
 
         // 3. 환자 생성 시 1:1 관계인 빈 메모리 북도 마스터 데이터를 함께 생성해 줌
-        MemoryBook memoryBook = MemoryBook.builder()
-                .patient(savedPatient) // 환자 매핑
-                .build();              // 나머지는 빈 값(Null)으로 생성 후 보호자가 나중에 수정하도록 유도
-        memoryBookRepository.save(memoryBook);
+        PatientMemory patientMemory = PatientMemory.builder()
+                .patient(savedPatient)
+                .build();
+        patientMemoryRepository.save(patientMemory);
 
 
         // 4. 환자-보호자 매핑 연관 데이터 생성 및 저장 (DDD: 도메인 간의 관계 맺기)

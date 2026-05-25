@@ -27,7 +27,7 @@ public class SecurityConfig {
                 // 최신 함수형 설정 문법 반영 (creationPolicy 에러 해결)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/users/login", "/api/v1/users/signup", "/api/v1/devices").permitAll()
+                        .requestMatchers("/api/v1/users/login", "/api/v1/users/signup", "/api/v1/devices", "/api/v1/devices/*/voice").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
