@@ -27,6 +27,9 @@ public class Post {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+
+    // -> 추 후 카테고리 추가
+
     private String imageUrl;
 
     @Column(nullable = false)
