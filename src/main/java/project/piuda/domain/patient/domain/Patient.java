@@ -6,6 +6,7 @@ import project.piuda.domain.device.domain.Device;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "patients")
@@ -28,6 +29,9 @@ public class Patient {
 
     private String dementiaStage;
 
+    @Column(unique = true, length = 8)
+    private String inviteCode;
+
     // Optional 1:1 관계 설정
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_id", unique = true)
@@ -42,6 +46,7 @@ public class Patient {
         this.gender = gender;
         this.dementiaStage = dementiaStage;
         this.createdAt = LocalDateTime.now();
+        this.inviteCode = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
     }
 
     // === 비즈니스 로직 (DDD 사상: Setter 배제, 의미 있는 메서드 사용) ===

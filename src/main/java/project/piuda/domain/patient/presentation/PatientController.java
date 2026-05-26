@@ -2,9 +2,11 @@ package project.piuda.domain.patient.presentation;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.patient.application.PatientService;
+import project.piuda.domain.patient.application.dto.PatientJoinRequest;
 import project.piuda.domain.patient.application.dto.PatientRegisterRequest;
 import project.piuda.domain.patient.application.dto.PatientResponse;
 import project.piuda.domain.patient.domain.Patient;
@@ -47,5 +49,21 @@ public class PatientController {
 
         PatientResponse response = patientService.registerPatient(request, userDetails.getId());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<PatientResponse> joinPatient(
+            @RequestBody PatientJoinRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        PatientResponse response = patientService.joinPatient(request, userDetails.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<PatientResponse>> getMyPatients(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        return ResponseEntity.ok(patientService.getMyPatients(userDetails.getId()));
     }
 }

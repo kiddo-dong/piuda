@@ -5,6 +5,7 @@ import java.util.Optional;
 
 public interface PatientRepository extends JpaRepository<Patient, Long> {
 
-    // ESP32 디바이스 시리얼로 연동된 환자 조회
     Optional<Patient> findByDeviceDeviceSerial(String deviceSerial);
+
+    Optional<Patient> findByInviteCode(String inviteCode);
 }

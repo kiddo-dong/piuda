@@ -7,8 +7,11 @@ import project.piuda.domain.device.domain.Device;
 import project.piuda.domain.device.domain.DeviceRepository;
 import project.piuda.domain.patientmemory.domain.PatientMemory;
 import project.piuda.domain.patientmemory.domain.PatientMemoryRepository;
+import project.piuda.domain.patient.application.dto.PatientJoinRequest;
 import project.piuda.domain.patient.application.dto.PatientRegisterRequest;
 import project.piuda.domain.patient.application.dto.PatientResponse;
+
+import java.util.List;
 import project.piuda.domain.patient.domain.Patient;
 import project.piuda.domain.patient.domain.PatientMember;
 import project.piuda.domain.patient.domain.PatientMemberRepository;
@@ -78,5 +81,33 @@ public class PatientService {
         patientMemberRepository.save(patientMember);
 
         return patientMapper.toResponseDto(savedPatient);
+    }
+
+    @Transactional
+    public PatientResponse joinPatient(PatientJoinRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+
+        Patient patient = patientRepository.findByInviteCode(request.getInviteCode())
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대코드입니다."));
+
+        boolean alreadyJoined = patientMemberRepository.existsByPatientAndUser(patient, user);
+        if (alreadyJoined) {
+            throw new IllegalArgumentException("이미 연결된 환자입니다.");
+        }
+
+        PatientMember patientMember = PatientMember.builder()
+                .patient(patient)
+                .user(user)
+                .build();
+        patientMemberRepository.save(patientMember);
+
+        return patientMapper.toResponseDto(patient);
+    }
+
+    public List<PatientResponse> getMyPatients(Long userId) {
+        return patientMemberRepository.findByUserId(userId).stream()
+                .map(pm -> patientMapper.toResponseDto(pm.getPatient()))
+                .toList();
     }
 }
