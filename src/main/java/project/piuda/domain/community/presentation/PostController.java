@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.community.application.PostService;
 import project.piuda.domain.community.application.dto.PostRequest;
 import project.piuda.domain.community.application.dto.PostResponse;
+import project.piuda.domain.community.domain.PostCategory;
 
 import java.util.List;
 import java.util.Map;
@@ -29,8 +30,9 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<List<PostResponse>> getPosts(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(postService.getPosts(userDetails.getUsername()));
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) PostCategory category) {
+        return ResponseEntity.ok(postService.getPosts(userDetails.getUsername(), category));
     }
 
     @GetMapping("/{postId}")

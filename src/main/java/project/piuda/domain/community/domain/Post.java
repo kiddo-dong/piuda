@@ -3,7 +3,6 @@ package project.piuda.domain.community.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import project.piuda.domain.user.domain.User;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,8 +26,9 @@ public class Post {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-
-    // -> 추 후 카테고리 추가
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostCategory category;
 
     private String imageUrl;
 
@@ -41,18 +41,20 @@ public class Post {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Post(User writer, String title, String content, String imageUrl) {
+    public Post(User writer, String title, String content, PostCategory category, String imageUrl) {
         this.writer = writer;
         this.title = title;
         this.content = content;
+        this.category = category;
         this.imageUrl = imageUrl;
         this.likeCount = 0;
         this.createdAt = LocalDateTime.now();
     }
 
-    public void update(String title, String content, String imageUrl) {
+    public void update(String title, String content, PostCategory category, String imageUrl) {
         this.title = title;
         this.content = content;
+        this.category = category;
         this.imageUrl = imageUrl;
         this.updatedAt = LocalDateTime.now();
     }

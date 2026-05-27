@@ -8,6 +8,7 @@ import project.piuda.domain.calendar.domain.CareCalendar; // ★ 캘린더 연�
 import project.piuda.domain.calendar.domain.CareCalendarRepository; // ★ 캘린더 연동용 추가
 import project.piuda.domain.calendar.domain.CalendarType; // ★ 캘린더 연동용 추가
 import project.piuda.domain.patient.domain.Patient;
+import project.piuda.domain.patient.domain.PatientMemberRepository;
 import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
@@ -24,6 +25,7 @@ public class DailyLogService {
 
     private final DailyLogRepository dailyLogRepository;
     private final PatientRepository patientRepository;
+    private final PatientMemberRepository patientMemberRepository;
     private final UserRepository userRepository;
     private final CareCalendarRepository careCalendarRepository; // ★ 캘린더 연동을 위해 주입 추가!
 
@@ -32,8 +34,9 @@ public class DailyLogService {
     public Long createDailyLog(Long patientId, String userEmail, DailyLogRequest request) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 환자입니다."));
-        User writer = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        User writer = getUser(userEmail);
+
+        validatePatientAccess(patient, writer);
 
         if (!"CAREGIVER".equals(writer.getRole().name()) && request.getEmotionalCommunicationMinutes() > 0) {
             throw new IllegalArgumentException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
@@ -86,16 +89,22 @@ public class DailyLogService {
     }
 
     // 2. 환자별 일지 목록 조회
-    public List<DailyLogResponse> getDailyLogs(Long patientId) {
+    public List<DailyLogResponse> getDailyLogs(Long patientId, String userEmail) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 환자입니다."));
+        User user = getUser(userEmail);
+        validatePatientAccess(patient, user);
         return dailyLogRepository.findByPatientIdOrderByLogDateDesc(patientId).stream()
                 .map(DailyLogResponse::new)
                 .collect(Collectors.toList());
     }
 
     // 3. 일지 상세 조회
-    public DailyLogResponse getDailyLogDetails(Long logId) {
+    public DailyLogResponse getDailyLogDetails(Long logId, String userEmail) {
         DailyLog log = dailyLogRepository.findById(logId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일지입니다."));
+        User user = getUser(userEmail);
+        validatePatientAccess(log.getPatient(), user);
         return new DailyLogResponse(log);
     }
 
@@ -104,8 +113,9 @@ public class DailyLogService {
     public void updateDailyLog(Long logId, String userEmail, DailyLogRequest request) {
         DailyLog log = dailyLogRepository.findById(logId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일지입니다."));
-        User writer = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        User writer = getUser(userEmail);
+
+        validatePatientAccess(log.getPatient(), writer);
 
         if (!"CAREGIVER".equals(writer.getRole().name()) && request.getEmotionalCommunicationMinutes() > 0) {
             throw new IllegalArgumentException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
@@ -128,9 +138,22 @@ public class DailyLogService {
 
     // 5. 일지 삭제
     @Transactional
-    public void deleteDailyLog(Long logId) {
+    public void deleteDailyLog(Long logId, String userEmail) {
         DailyLog log = dailyLogRepository.findById(logId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일지입니다."));
+        User user = getUser(userEmail);
+        validatePatientAccess(log.getPatient(), user);
         dailyLogRepository.delete(log);
+    }
+
+    private User getUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+    }
+
+    private void validatePatientAccess(Patient patient, User user) {
+        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
+            throw new IllegalArgumentException("해당 환자에 대한 접근 권한이 없습니다.");
+        }
     }
 }

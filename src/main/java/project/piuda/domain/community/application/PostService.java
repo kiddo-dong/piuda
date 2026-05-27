@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.community.application.dto.PostRequest;
 import project.piuda.domain.community.application.dto.PostResponse;
 import project.piuda.domain.community.domain.*;
+import project.piuda.domain.community.domain.PostCategory;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
 
@@ -28,14 +29,18 @@ public class PostService {
                 .writer(writer)
                 .title(request.getTitle())
                 .content(request.getContent())
+                .category(request.getCategory())
                 .imageUrl(request.getImageUrl())
                 .build();
         return postRepository.save(post).getId();
     }
 
-    public List<PostResponse> getPosts(String userEmail) {
+    public List<PostResponse> getPosts(String userEmail, PostCategory category) {
         User user = getUser(userEmail);
-        return postRepository.findAllByOrderByCreatedAtDesc().stream()
+        List<Post> posts = (category == null)
+                ? postRepository.findAllByOrderByCreatedAtDesc()
+                : postRepository.findAllByCategoryOrderByCreatedAtDesc(category);
+        return posts.stream()
                 .map(post -> new PostResponse(post, postLikeRepository.existsByPostIdAndUserId(post.getId(), user.getId())))
                 .collect(Collectors.toList());
     }
@@ -51,7 +56,7 @@ public class PostService {
         User user = getUser(userEmail);
         Post post = getPostOrThrow(postId);
         validateOwner(post.getWriter().getId(), user.getId());
-        post.update(request.getTitle(), request.getContent(), request.getImageUrl());
+        post.update(request.getTitle(), request.getContent(), request.getCategory(), request.getImageUrl());
     }
 
     @Transactional

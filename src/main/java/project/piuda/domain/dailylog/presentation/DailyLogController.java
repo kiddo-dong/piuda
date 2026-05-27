@@ -30,14 +30,18 @@ public class DailyLogController {
 
     // 2. 특정 환자의 하루 일지 목록 조회
     @GetMapping("/patients/{patientId}/daily-logs")
-    public ResponseEntity<List<DailyLogResponse>> getDailyLogs(@PathVariable Long patientId) {
-        return ResponseEntity.ok(dailyLogService.getDailyLogs(patientId));
+    public ResponseEntity<List<DailyLogResponse>> getDailyLogs(
+            @PathVariable Long patientId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(dailyLogService.getDailyLogs(patientId, userDetails.getUsername()));
     }
 
     // 3. 하루 일지 상세 단건 조회
     @GetMapping("/daily-logs/{logId}")
-    public ResponseEntity<DailyLogResponse> getDailyLogDetails(@PathVariable Long logId) {
-        return ResponseEntity.ok(dailyLogService.getDailyLogDetails(logId));
+    public ResponseEntity<DailyLogResponse> getDailyLogDetails(
+            @PathVariable Long logId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(dailyLogService.getDailyLogDetails(logId, userDetails.getUsername()));
     }
 
     // 4. 하루 일지 수정
@@ -53,8 +57,10 @@ public class DailyLogController {
 
     // 5. 하루 일지 삭제
     @DeleteMapping("/daily-logs/{logId}")
-    public ResponseEntity<Void> deleteDailyLog(@PathVariable Long logId) {
-        dailyLogService.deleteDailyLog(logId);
+    public ResponseEntity<Void> deleteDailyLog(
+            @PathVariable Long logId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        dailyLogService.deleteDailyLog(logId, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 }
