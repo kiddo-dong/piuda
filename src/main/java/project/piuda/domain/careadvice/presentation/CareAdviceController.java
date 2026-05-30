@@ -36,6 +36,15 @@ public class CareAdviceController {
         return ResponseEntity.ok(careAdviceService.sendMessage(sessionId, userDetails.getUsername(), request));
     }
 
+    // 세션 삭제
+    @DeleteMapping("/care-advice/sessions/{sessionId}")
+    public ResponseEntity<Void> deleteSession(
+            @PathVariable Long sessionId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        careAdviceService.deleteSession(sessionId, userDetails.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
     // 세션 목록 조회
     @GetMapping("/patients/{patientId}/care-advice/sessions")
     public ResponseEntity<List<CareAdviceSessionResponse>> getSessions(

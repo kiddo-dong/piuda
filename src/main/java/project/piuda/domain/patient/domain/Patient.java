@@ -67,4 +67,11 @@ public class Patient {
     public void removeDevice() {
         this.device = null;
     }
+
+    public void update(String name, LocalDate birthDate, Gender gender, String dementiaStage) {
+        if (name != null && !name.isBlank()) this.name = name;
+        if (birthDate != null) this.birthDate = birthDate;
+        if (gender != null) this.gender = gender;
+        if (dementiaStage != null && !dementiaStage.isBlank()) this.dementiaStage = dementiaStage;
+    }
 }

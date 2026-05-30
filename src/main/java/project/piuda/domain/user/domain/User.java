@@ -55,4 +55,10 @@ public class User {
     public void subtractScore(int amount) {
         this.score = Math.max(0, this.score - amount);
     }
+
+    public void update(String name, String phone, String encodedPassword) {
+        if (name != null && !name.isBlank()) this.name = name;
+        if (phone != null && !phone.isBlank()) this.phone = phone;
+        if (encodedPassword != null) this.password = encodedPassword;
+    }
 }

@@ -10,11 +10,16 @@ import project.piuda.domain.user.application.dto.LoginRequest;
 import project.piuda.domain.user.application.dto.RankingResponse;
 import project.piuda.domain.user.application.dto.SignUpRequest;
 import project.piuda.domain.user.application.dto.TokenResponse;
+import project.piuda.domain.user.application.dto.UserResponse;
+import project.piuda.domain.user.application.dto.UserUpdateRequest;
 import project.piuda.domain.user.domain.*;
+import project.piuda.global.exception.BusinessException;
+import project.piuda.global.exception.ConflictException;
+import project.piuda.global.exception.NotFoundException;
+import project.piuda.global.security.JwtTokenProvider;
 
 import java.util.ArrayList;
 import java.util.List;
-import project.piuda.global.security.JwtTokenProvider;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +34,7 @@ public class UserService {
     @Transactional
     public void signUp(SignUpRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+            throw new ConflictException("이미 존재하는 이메일입니다.");
         }
 
         User user = User.builder()
@@ -41,7 +46,6 @@ public class UserService {
                 .build();
         userRepository.save(user);
 
-        // 간병인일 경우 서브 프로필 추가 생성
         if (request.getRole() == Role.CAREGIVER) {
             CaregiverProfile profile = CaregiverProfile.builder()
                     .user(user)
@@ -54,20 +58,41 @@ public class UserService {
 
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 일치하지 않습니다."));
+                .orElseThrow(() -> new BusinessException("이메일 또는 비밀번호가 일치하지 않습니다."));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 일치하지 않습니다.");
+            throw new BusinessException("이메일 또는 비밀번호가 일치하지 않습니다.");
         }
 
         String token = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
         return new TokenResponse(token);
     }
 
+    public UserResponse getMe(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        return new UserResponse(user);
+    }
+
+    @Transactional
+    public void updateMe(String email, UserUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        String encodedPassword = request.getPassword() != null && !request.getPassword().isBlank()
+                ? passwordEncoder.encode(request.getPassword()) : null;
+        user.update(request.getName(), request.getPhone(), encodedPassword);
+    }
+
+    @Transactional
+    public void deleteMe(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        userRepository.delete(user);
+    }
+
     @Cacheable(value = "ranking", key = "#limit")
     public List<RankingResponse> getRanking(int limit) {
-        List<project.piuda.domain.user.domain.User> users =
-                userRepository.findAllByOrderByScoreDesc(PageRequest.of(0, limit));
+        List<User> users = userRepository.findAllByOrderByScoreDesc(PageRequest.of(0, limit));
         List<RankingResponse> result = new ArrayList<>();
         for (int i = 0; i < users.size(); i++) {
             result.add(new RankingResponse(i + 1, users.get(i)));

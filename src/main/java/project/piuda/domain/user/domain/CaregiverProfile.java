@@ -26,8 +26,6 @@ public class CaregiverProfile {
     @Builder
     public CaregiverProfile(User user, int experienceYears, String introduction) {
         this.user = user;
-        this.caregiverId = user.getId();
-        this.innerScore = 0; // 초기 점수 0
         this.experienceYears = experienceYears;
         this.introduction = introduction;
     }

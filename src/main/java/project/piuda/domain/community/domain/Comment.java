@@ -43,6 +43,10 @@ public class Comment {
         this.createdAt = LocalDateTime.now();
     }
 
+    public void update(String content) {
+        this.content = content;
+    }
+
     public void adopt() {
         this.isAdopted = true;
     }

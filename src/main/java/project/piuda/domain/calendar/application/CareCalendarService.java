@@ -2,7 +2,6 @@ package project.piuda.domain.calendar.application;
 
 import project.piuda.domain.calendar.application.dto.CareCalendarRequest;
 import project.piuda.domain.calendar.application.dto.CareCalendarResponse;
-import project.piuda.domain.calendar.domain.CalendarCategory;
 import project.piuda.domain.calendar.domain.CalendarType;
 import project.piuda.domain.calendar.domain.CareCalendar;
 import project.piuda.domain.calendar.domain.CareCalendarRepository;
@@ -10,6 +9,8 @@ import project.piuda.domain.patient.domain.Patient;
 import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.ForbiddenException;
+import project.piuda.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,19 +27,17 @@ public class CareCalendarService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
 
-    // 1. 수동 일정 등록 (SCHEDULE 유형 - 담당자 지정 포함)
     @Transactional
     public Long createSchedule(Long patientId, String userEmail, CareCalendarRequest request) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 환자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
         User writer = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 작성자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
         User assignee = null;
         if (request.getAssigneeId() != null) {
             assignee = userRepository.findById(request.getAssigneeId())
-                    .orElseThrow(() -> new IllegalArgumentException("지정된 담당자가 존재하지 않는 유저입니다."));
-            // 💡 [기획 연동 포인트] 이곳에서 assignee 유저에게 FCM 푸시 알림 발송 로직을 연계하면 됩니다.
+                    .orElseThrow(() -> new NotFoundException("지정된 담당자가 존재하지 않는 유저입니다."));
         }
 
         CareCalendar calendar = CareCalendar.builder()
@@ -47,7 +46,7 @@ public class CareCalendarService {
                 .assignee(assignee)
                 .title(request.getTitle())
                 .content(request.getContent())
-                .calendarType(CalendarType.SCHEDULE) // 수동 스케줄
+                .calendarType(CalendarType.SCHEDULE)
                 .category(request.getCategory())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
@@ -56,29 +55,27 @@ public class CareCalendarService {
         return careCalendarRepository.save(calendar).getId();
     }
 
-    // 2. 특정 환자의 공유 달력 일정 전체 조회
     public List<CareCalendarResponse> getCalendarEvents(Long patientId) {
         return careCalendarRepository.findByPatientIdOrderByStartTimeAsc(patientId).stream()
                 .map(CareCalendarResponse::new)
                 .collect(Collectors.toList());
     }
 
-    // 3. 수동 일정 수정
     @Transactional
     public void updateSchedule(Long calendarId, String userEmail, CareCalendarRequest request) {
         CareCalendar calendar = careCalendarRepository.findById(calendarId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 일정입니다."));
         User requester = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
         if (!calendar.getWriter().getId().equals(requester.getId())) {
-            throw new IllegalArgumentException("본인이 작성한 일정만 수정할 수 있습니다.");
+            throw new ForbiddenException("본인이 작성한 일정만 수정할 수 있습니다.");
         }
 
         User assignee = null;
         if (request.getAssigneeId() != null) {
             assignee = userRepository.findById(request.getAssigneeId())
-                    .orElseThrow(() -> new IllegalArgumentException("지정된 담당자가 존재하지 않는 유저입니다."));
+                    .orElseThrow(() -> new NotFoundException("지정된 담당자가 존재하지 않는 유저입니다."));
         }
 
         calendar.updateSchedule(
@@ -91,16 +88,15 @@ public class CareCalendarService {
         );
     }
 
-    // 4. 일정 삭제
     @Transactional
     public void deleteCalendarEvent(Long calendarId, String userEmail) {
         CareCalendar calendar = careCalendarRepository.findById(calendarId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 일정입니다."));
         User requester = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
         if (!calendar.getWriter().getId().equals(requester.getId())) {
-            throw new IllegalArgumentException("본인이 작성한 일정만 삭제할 수 있습니다.");
+            throw new ForbiddenException("본인이 작성한 일정만 삭제할 수 있습니다.");
         }
 
         careCalendarRepository.delete(calendar);

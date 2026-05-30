@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -18,13 +20,14 @@ public class DailyLogController {
     private final DailyLogService dailyLogService;
 
     // 1. 하루 일지 작성 (작성 즉시 달력 도장 연동)
-    @PostMapping("/patients/{patientId}/daily-logs")
+    @PostMapping(value = "/patients/{patientId}/daily-logs", consumes = "multipart/form-data")
     public ResponseEntity<Long> createDailyLog(
             @PathVariable Long patientId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody DailyLogRequest request) {
+            @RequestPart("data") DailyLogRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
 
-        Long logId = dailyLogService.createDailyLog(patientId, userDetails.getUsername(), request);
+        Long logId = dailyLogService.createDailyLog(patientId, userDetails.getUsername(), request, image);
         return ResponseEntity.ok(logId);
     }
 
@@ -45,13 +48,14 @@ public class DailyLogController {
     }
 
     // 4. 하루 일지 수정
-    @PutMapping("/daily-logs/{logId}")
+    @PutMapping(value = "/daily-logs/{logId}", consumes = "multipart/form-data")
     public ResponseEntity<Void> updateDailyLog(
             @PathVariable Long logId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody DailyLogRequest request) {
+            @RequestPart("data") DailyLogRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
 
-        dailyLogService.updateDailyLog(logId, userDetails.getUsername(), request);
+        dailyLogService.updateDailyLog(logId, userDetails.getUsername(), request, image);
         return ResponseEntity.ok().build();
     }
 

@@ -1,0 +1,683 @@
+{
+  "info": {
+    "name": "Piuda API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "patientId", "value": "1" },
+    { "key": "logId", "value": "1" },
+    { "key": "calendarId", "value": "1" },
+    { "key": "postId", "value": "1" },
+    { "key": "commentId", "value": "1" },
+    { "key": "sessionId", "value": "1" },
+    { "key": "galleryId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "회원가입 (보호자)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/users/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"protector@test.com\",\n  \"password\": \"1234\",\n  \"name\": \"홍보호자\",\n  \"phone\": \"010-1111-2222\",\n  \"role\": \"PROTECTOR\"\n}"
+            }
+          }
+        },
+        {
+          "name": "회원가입 (간병인)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/users/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"caregiver@test.com\",\n  \"password\": \"1234\",\n  \"name\": \"김간병인\",\n  \"phone\": \"010-3333-4444\",\n  \"role\": \"CAREGIVER\",\n  \"experienceYears\": 3,\n  \"introduction\": \"성실한 간병인입니다.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "로그인",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "pm.collectionVariables.set('token', res.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/users/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"protector@test.com\",\n  \"password\": \"1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "내 정보 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/users/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "내 정보 수정",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/v1/users/me",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"홍보호자(수정)\",\n  \"phone\": \"010-9999-8888\",\n  \"password\": \"\"\n}"
+            }
+          }
+        },
+        {
+          "name": "회원 탈퇴",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/users/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "랭킹 조회",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/ranking?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "ranking"],
+              "query": [{ "key": "limit", "value": "10" }]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patient",
+      "item": [
+        {
+          "name": "환자 등록",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "pm.collectionVariables.set('patientId', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/patients",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"홍환자\",\n  \"birthDate\": \"1940-05-15\",\n  \"gender\": \"MALE\",\n  \"dementiaStage\": \"경증\"\n}"
+            }
+          }
+        },
+        {
+          "name": "초대코드로 환자 합류",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/patients/join",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inviteCode\": \"ABCD1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "내 환자 목록 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/patients/my",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "환자 상세 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "환자 정보 수정",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"홍환자(수정)\",\n  \"birthDate\": \"1940-05-15\",\n  \"gender\": \"MALE\",\n  \"dementiaStage\": \"중증\"\n}"
+            }
+          }
+        },
+        {
+          "name": "환자 삭제",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "디바이스 연동",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/v1/patients/{{patientId}}/devices?deviceSerial=ESP32-001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "patients", "{{patientId}}", "devices"],
+              "query": [{ "key": "deviceSerial", "value": "ESP32-001" }]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "디바이스 연동 해제",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/devices",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Device",
+      "item": [
+        {
+          "name": "디바이스 등록",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/devices",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceSerial\": \"ESP32-001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "음성 기록 업로드",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/devices/ESP32-001/voice",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"audioUrl\": \"https://s3.amazonaws.com/piuda/voice/test.mp3\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Daily Log",
+      "item": [
+        {
+          "name": "일지 등록",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('logId', pm.response.json());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/daily-logs",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "type": "text",
+                  "value": "{\n  \"logDate\": \"2026-05-30\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"17:00:00\",\n  \"physicalHygiene\": true,\n  \"physicalBath\": false,\n  \"physicalMealHelp\": true,\n  \"physicalPositionChange\": false,\n  \"physicalMobilityHelp\": true,\n  \"physicalToiletHelp\": false,\n  \"physicalTotalMinutes\": 60,\n  \"cognitiveStimulationMinutes\": 30,\n  \"cognitiveLifeTogetherMinutes\": 20,\n  \"cognitiveBehaviorManagementMinutes\": 10,\n  \"emotionalCommunicationMinutes\": 0,\n  \"householdMealClean\": true,\n  \"householdPersonalHelp\": false,\n  \"householdTotalMinutes\": 30,\n  \"physicalFunctionTrend\": \"STABLE\",\n  \"mealFunctionTrend\": \"IMPROVING\",\n  \"bowelIncontinenceCount\": 0,\n  \"urineIncontinenceCount\": 1,\n  \"specialNotes\": \"특이사항 없음\"\n}",
+                  "contentType": "application/json"
+                },
+                { "key": "image", "type": "file", "src": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "일지 목록 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/daily-logs",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "일지 상세 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/daily-logs/{{logId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "일지 수정",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/v1/daily-logs/{{logId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "type": "text",
+                  "value": "{\n  \"logDate\": \"2026-05-30\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"18:00:00\",\n  \"physicalHygiene\": true,\n  \"physicalBath\": true,\n  \"physicalMealHelp\": true,\n  \"physicalPositionChange\": false,\n  \"physicalMobilityHelp\": true,\n  \"physicalToiletHelp\": true,\n  \"physicalTotalMinutes\": 90,\n  \"cognitiveStimulationMinutes\": 30,\n  \"cognitiveLifeTogetherMinutes\": 20,\n  \"cognitiveBehaviorManagementMinutes\": 10,\n  \"emotionalCommunicationMinutes\": 0,\n  \"householdMealClean\": true,\n  \"householdPersonalHelp\": true,\n  \"householdTotalMinutes\": 45,\n  \"physicalFunctionTrend\": \"IMPROVING\",\n  \"mealFunctionTrend\": \"STABLE\",\n  \"bowelIncontinenceCount\": 0,\n  \"urineIncontinenceCount\": 0,\n  \"specialNotes\": \"수정된 특이사항\"\n}",
+                  "contentType": "application/json"
+                },
+                { "key": "image", "type": "file", "src": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "일지 삭제",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/daily-logs/{{logId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calendar",
+      "item": [
+        {
+          "name": "일정 등록",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('calendarId', pm.response.json());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/calendars",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"병원 방문\",\n  \"content\": \"정기 검진\",\n  \"assigneeId\": null,\n  \"category\": \"VISIT\",\n  \"startTime\": \"2026-06-01T10:00:00\",\n  \"endTime\": \"2026-06-01T12:00:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "일정 목록 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/calendars",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "일정 수정",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/v1/calendars/{{calendarId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"병원 방문 (수정)\",\n  \"content\": \"정기 검진 - 일정 변경\",\n  \"assigneeId\": null,\n  \"category\": \"VISIT\",\n  \"startTime\": \"2026-06-02T10:00:00\",\n  \"endTime\": \"2026-06-02T12:00:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "일정 삭제",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/calendars/{{calendarId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Community - Post",
+      "item": [
+        {
+          "name": "게시글 작성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "pm.collectionVariables.set('postId', res.postId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/posts",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "type": "text",
+                  "value": "{\n  \"title\": \"치매 환자 식사 도움 팁\",\n  \"content\": \"식사 도움 시 이런 방법이 효과적이었어요.\",\n  \"category\": \"TIP\"\n}",
+                  "contentType": "application/json"
+                },
+                { "key": "image", "type": "file", "src": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "게시글 목록 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/posts",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "게시글 상세 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/posts/{{postId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "게시글 수정",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/v1/posts/{{postId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "type": "text",
+                  "value": "{\n  \"title\": \"(수정) 치매 환자 식사 도움 팁\",\n  \"content\": \"내용 수정했습니다.\",\n  \"category\": \"TIP\"\n}",
+                  "contentType": "application/json"
+                },
+                { "key": "image", "type": "file", "src": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "게시글 삭제",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/posts/{{postId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "게시글 좋아요",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/posts/{{postId}}/likes",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Community - Comment",
+      "item": [
+        {
+          "name": "댓글 작성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "pm.collectionVariables.set('commentId', res.commentId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/posts/{{postId}}/comments",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"좋은 정보 감사합니다!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "댓글 목록 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/posts/{{postId}}/comments",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "댓글 수정",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/v1/comments/{{commentId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"수정된 댓글 내용입니다.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "댓글 삭제",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/comments/{{commentId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "댓글 채택",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/posts/{{postId}}/comments/{{commentId}}/adopt",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "댓글 채택 취소",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/posts/{{postId}}/comments/{{commentId}}/adopt",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Care Advice (AI)",
+      "item": [
+        {
+          "name": "세션 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "pm.collectionVariables.set('sessionId', res.sessionId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/care-advice/sessions",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "메시지 전송",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/care-advice/sessions/{{sessionId}}/messages",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"치매 환자가 밥을 안 먹으려 할 때 어떻게 해야 하나요?\"\n}"
+            }
+          }
+        },
+        {
+          "name": "세션 목록 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/care-advice/sessions",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "메시지 목록 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/care-advice/sessions/{{sessionId}}/messages",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "세션 삭제",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/care-advice/sessions/{{sessionId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Memory Gallery",
+      "item": [
+        {
+          "name": "사진 업로드",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/gallery",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "image", "type": "file", "src": "" },
+                { "key": "memo", "type": "text", "value": "소중한 추억" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "갤러리 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/gallery",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "갤러리 항목 삭제",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/gallery/{{galleryId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patient Memory",
+      "item": [
+        {
+          "name": "환자 메모리 조회",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/patient-memory",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "환자 메모리 수정",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/v1/patients/{{patientId}}/patient-memory",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodType\": \"A\",\n  \"longTermCareGrade\": 2,\n  \"dementiaType\": \"알츠하이머\",\n  \"comorbidities\": \"고혈압, 당뇨\",\n  \"contraindications\": \"없음\",\n  \"medicationInfo\": \"혈압약 1일 1회\",\n  \"prnMedicationInfo\": null,\n  \"primaryDoctorInfo\": \"서울대병원 신경과 김의사\",\n  \"likes\": \"트로트, 화투\",\n  \"dislikes\": \"큰 소리\",\n  \"soothingWords\": \"잘 하셨어요, 대단해요\",\n  \"ineffectiveWords\": \"왜 또 그러세요\",\n  \"sundowningInfo\": \"저녁 6시 이후 불안 증가\",\n  \"repetitiveBehaviors\": \"집에 가겠다고 반복\",\n  \"wanderingRoute\": \"현관 → 거실 반복\",\n  \"emergencyContacts\": \"아들 010-1234-5678\",\n  \"preferredHospital\": \"서울대병원\",\n  \"specialNotes\": \"물 자주 드셔야 함\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

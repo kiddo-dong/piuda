@@ -1,5 +1,6 @@
 package project.piuda.domain.community.presentation;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +24,7 @@ public class CommentController {
     public ResponseEntity<Map<String, Long>> createComment(
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody CommentRequest request) {
+            @Valid @RequestBody CommentRequest request) {
         Long commentId = commentService.createComment(postId, userDetails.getUsername(), request);
         return ResponseEntity.ok(Map.of("commentId", commentId));
     }
@@ -31,6 +32,15 @@ public class CommentController {
     @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<List<CommentResponse>> getComments(@PathVariable Long postId) {
         return ResponseEntity.ok(commentService.getComments(postId));
+    }
+
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<Void> updateComment(
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody CommentRequest request) {
+        commentService.updateComment(commentId, userDetails.getUsername(), request);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/comments/{commentId}")

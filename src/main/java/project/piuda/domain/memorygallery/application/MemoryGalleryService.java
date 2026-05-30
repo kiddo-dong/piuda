@@ -8,9 +8,12 @@ import project.piuda.domain.memorygallery.application.dto.MemoryGalleryItem;
 import project.piuda.domain.memorygallery.domain.MemoryGallery;
 import project.piuda.domain.memorygallery.domain.MemoryGalleryRepository;
 import project.piuda.domain.patient.domain.Patient;
+import project.piuda.domain.patient.domain.PatientMemberRepository;
 import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.ForbiddenException;
+import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.S3UploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,15 +35,18 @@ public class MemoryGalleryService {
     private final VoiceRecordRepository voiceRecordRepository;
     private final MemoryGalleryRepository memoryGalleryRepository;
     private final PatientRepository patientRepository;
+    private final PatientMemberRepository patientMemberRepository;
     private final UserRepository userRepository;
     private final S3UploadService s3UploadService;
 
     @Transactional
     public void uploadPhoto(Long patientId, String userEmail, MultipartFile image, String memo) throws IOException {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 환자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
         User writer = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+
+        validatePatientAccess(patient, writer);
 
         String imageUrl = s3UploadService.upload(image, "memory-gallery");
 
@@ -52,8 +58,13 @@ public class MemoryGalleryService {
                 .build());
     }
 
-    // 환자 기준으로 이미지(DailyLog + 직접 업로드) + 음성(VoiceRecord) 통합 조회 (최신순)
-    public List<MemoryGalleryItem> getGallery(Long patientId) {
+    public List<MemoryGalleryItem> getGallery(Long patientId, String userEmail) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+
+        validatePatientAccess(patient, user);
         List<MemoryGalleryItem> items = new ArrayList<>();
 
         for (DailyLog log : dailyLogRepository.findByPatientIdAndImageUrlIsNotNullOrderByLogDateDesc(patientId)) {
@@ -70,7 +81,23 @@ public class MemoryGalleryService {
         }
 
         items.sort(Comparator.comparing(MemoryGalleryItem::getRecordedAt).reversed());
-
         return items;
+    }
+
+    @Transactional
+    public void deletePhoto(Long galleryId, String userEmail) {
+        MemoryGallery gallery = memoryGalleryRepository.findById(galleryId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 갤러리 항목입니다."));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+
+        validatePatientAccess(gallery.getPatient(), user);
+        memoryGalleryRepository.delete(gallery);
+    }
+
+    private void validatePatientAccess(Patient patient, User user) {
+        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
+            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
+        }
     }
 }

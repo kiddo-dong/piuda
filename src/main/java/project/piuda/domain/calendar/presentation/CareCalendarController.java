@@ -1,5 +1,6 @@
 package project.piuda.domain.calendar.presentation;
 
+import jakarta.validation.Valid;
 import project.piuda.domain.calendar.application.CareCalendarService;
 import project.piuda.domain.calendar.application.dto.CareCalendarRequest;
 import project.piuda.domain.calendar.application.dto.CareCalendarResponse;
@@ -23,7 +24,7 @@ public class CareCalendarController {
     public ResponseEntity<Long> createSchedule(
             @PathVariable Long patientId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody CareCalendarRequest request) {
+            @Valid @RequestBody CareCalendarRequest request) {
         Long id = careCalendarService.createSchedule(patientId, userDetails.getUsername(), request);
         return ResponseEntity.ok(id);
     }
@@ -39,7 +40,7 @@ public class CareCalendarController {
     public ResponseEntity<Void> updateSchedule(
             @PathVariable Long calendarId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody CareCalendarRequest request) {
+            @Valid @RequestBody CareCalendarRequest request) {
         careCalendarService.updateSchedule(calendarId, userDetails.getUsername(), request);
         return ResponseEntity.ok().build();
     }

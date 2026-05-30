@@ -37,6 +37,4 @@ public class DailyLogRequest {
     private int urineIncontinenceCount;
 
     private String specialNotes;
-
-    private String imageUrl;
 }

@@ -9,6 +9,11 @@ import project.piuda.domain.community.domain.*;
 import project.piuda.domain.community.domain.PostCategory;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.ForbiddenException;
+import project.piuda.global.exception.NotFoundException;
+import project.piuda.global.infrastructure.S3UploadService;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,16 +26,18 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserRepository userRepository;
+    private final S3UploadService s3UploadService;
 
     @Transactional
-    public Long createPost(String userEmail, PostRequest request) {
+    public Long createPost(String userEmail, PostRequest request, MultipartFile image) throws IOException {
         User writer = getUser(userEmail);
+        String imageUrl = (image != null && !image.isEmpty()) ? s3UploadService.upload(image, "posts") : null;
         Post post = Post.builder()
                 .writer(writer)
                 .title(request.getTitle())
                 .content(request.getContent())
                 .category(request.getCategory())
-                .imageUrl(request.getImageUrl())
+                .imageUrl(imageUrl)
                 .build();
         return postRepository.save(post).getId();
     }
@@ -52,11 +59,12 @@ public class PostService {
     }
 
     @Transactional
-    public void updatePost(Long postId, String userEmail, PostRequest request) {
+    public void updatePost(Long postId, String userEmail, PostRequest request, MultipartFile image) throws IOException {
         User user = getUser(userEmail);
         Post post = getPostOrThrow(postId);
         validateOwner(post.getWriter().getId(), user.getId());
-        post.update(request.getTitle(), request.getContent(), request.getCategory(), request.getImageUrl());
+        String imageUrl = (image != null && !image.isEmpty()) ? s3UploadService.upload(image, "posts") : post.getImageUrl();
+        post.update(request.getTitle(), request.getContent(), request.getCategory(), imageUrl);
     }
 
     @Transactional
@@ -87,17 +95,17 @@ public class PostService {
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
     }
 
     private Post getPostOrThrow(Long postId) {
         return postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 게시글입니다."));
     }
 
     private void validateOwner(Long writerId, Long userId) {
         if (!writerId.equals(userId)) {
-            throw new IllegalArgumentException("본인의 게시글만 수정/삭제할 수 있습니다.");
+            throw new ForbiddenException("본인의 게시글만 수정/삭제할 수 있습니다.");
         }
     }
 }

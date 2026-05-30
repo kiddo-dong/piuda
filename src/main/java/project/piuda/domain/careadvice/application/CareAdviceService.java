@@ -8,10 +8,11 @@ import project.piuda.domain.careadvice.application.dto.*;
 import project.piuda.domain.careadvice.domain.*;
 import project.piuda.domain.patient.domain.Patient;
 import project.piuda.domain.patient.domain.PatientRepository;
-import project.piuda.domain.patientmemory.domain.PatientMemory;
 import project.piuda.domain.patientmemory.domain.PatientMemoryRepository;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.ForbiddenException;
+import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.OpenAiChatClient;
 
 import java.util.Collections;
@@ -35,37 +36,31 @@ public class CareAdviceService {
     @Transactional
     public CareAdviceSessionResponse createSession(Long patientId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 환자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
 
-        CareAdviceSession session = CareAdviceSession.builder()
-                .user(user)
-                .patient(patient)
-                .build();
-
-        return new CareAdviceSessionResponse(sessionRepository.save(session));
+        return new CareAdviceSessionResponse(sessionRepository.save(
+                CareAdviceSession.builder().user(user).patient(patient).build()
+        ));
     }
 
     @Transactional
     public SendCareAdviceResponse sendMessage(Long sessionId, String userEmail, CareAdviceMessageRequest request) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
         CareAdviceSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 세션입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 세션입니다."));
 
         if (!session.getUser().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("본인의 세션에만 접근할 수 있습니다.");
+            throw new ForbiddenException("본인의 세션에만 접근할 수 있습니다.");
         }
 
-        // 최근 10개 메시지를 컨텍스트로 사용 (오래된 순 정렬)
         List<CareAdviceMessage> recentHistory = messageRepository.findRecentMessages(
                 sessionId, PageRequest.of(0, CONTEXT_MESSAGE_LIMIT)
         );
         Collections.reverse(recentHistory);
 
-        // 사용자 메시지 먼저 저장 (GPT 호출 실패해도 기록 보존)
         CareAdviceMessage userMessage = messageRepository.save(
                 CareAdviceMessage.builder()
                         .session(session)
@@ -74,11 +69,9 @@ public class CareAdviceService {
                         .build()
         );
 
-        // 환자 정보 컨텍스트 생성 후 GPT 호출
         String patientContext = buildPatientContext(session.getPatient());
         String aiResponse = openAiChatClient.sendMessage(recentHistory, request.getContent(), patientContext);
 
-        // AI 응답 저장
         CareAdviceMessage assistantMessage = messageRepository.save(
                 CareAdviceMessage.builder()
                         .session(session)
@@ -93,9 +86,22 @@ public class CareAdviceService {
         );
     }
 
+    @Transactional
+    public void deleteSession(Long sessionId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        CareAdviceSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 세션입니다."));
+
+        if (!session.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException("본인의 세션만 삭제할 수 있습니다.");
+        }
+        sessionRepository.delete(session);
+    }
+
     public List<CareAdviceSessionResponse> getSessions(Long patientId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
         return sessionRepository.findByUserIdAndPatientIdOrderByCreatedAtDesc(user.getId(), patientId)
                 .stream()
@@ -103,19 +109,29 @@ public class CareAdviceService {
                 .collect(Collectors.toList());
     }
 
+    public List<CareAdviceMessageResponse> getMessages(Long sessionId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        CareAdviceSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 세션입니다."));
+
+        if (!session.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException("본인의 세션에만 접근할 수 있습니다.");
+        }
+
+        return messageRepository.findBySessionIdOrderByCreatedAtAsc(sessionId)
+                .stream()
+                .map(CareAdviceMessageResponse::new)
+                .collect(Collectors.toList());
+    }
+
     private String buildPatientContext(Patient patient) {
         StringBuilder sb = new StringBuilder();
         sb.append("현재 돌보는 환자 정보:\n");
         sb.append("- 이름: ").append(patient.getName()).append("\n");
-        if (patient.getBirthDate() != null) {
-            sb.append("- 생년월일: ").append(patient.getBirthDate()).append("\n");
-        }
-        if (patient.getGender() != null) {
-            sb.append("- 성별: ").append(patient.getGender()).append("\n");
-        }
-        if (patient.getDementiaStage() != null) {
-            sb.append("- 치매 단계: ").append(patient.getDementiaStage()).append("\n");
-        }
+        if (patient.getBirthDate() != null) sb.append("- 생년월일: ").append(patient.getBirthDate()).append("\n");
+        if (patient.getGender() != null) sb.append("- 성별: ").append(patient.getGender()).append("\n");
+        if (patient.getDementiaStage() != null) sb.append("- 치매 단계: ").append(patient.getDementiaStage()).append("\n");
 
         patientMemoryRepository.findByPatientId(patient.getId()).ifPresent(memory -> {
             appendIfPresent(sb, "치매 유형", memory.getDementiaType());
@@ -141,22 +157,5 @@ public class CareAdviceService {
         if (value != null && !value.isBlank()) {
             sb.append("- ").append(label).append(": ").append(value).append("\n");
         }
-    }
-
-    public List<CareAdviceMessageResponse> getMessages(Long sessionId, String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
-        CareAdviceSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 세션입니다."));
-
-        if (!session.getUser().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("본인의 세션에만 접근할 수 있습니다.");
-        }
-
-        return messageRepository.findBySessionIdOrderByCreatedAtAsc(sessionId)
-                .stream()
-                .map(CareAdviceMessageResponse::new)
-                .collect(Collectors.toList());
     }
 }

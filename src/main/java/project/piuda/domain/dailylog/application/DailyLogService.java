@@ -4,18 +4,23 @@ import project.piuda.domain.dailylog.application.dto.DailyLogRequest;
 import project.piuda.domain.dailylog.application.dto.DailyLogResponse;
 import project.piuda.domain.dailylog.domain.DailyLog;
 import project.piuda.domain.dailylog.domain.DailyLogRepository;
-import project.piuda.domain.calendar.domain.CareCalendar; // ★ 캘린더 연동용 추가
-import project.piuda.domain.calendar.domain.CareCalendarRepository; // ★ 캘린더 연동용 추가
-import project.piuda.domain.calendar.domain.CalendarType; // ★ 캘린더 연동용 추가
+import project.piuda.domain.calendar.domain.CareCalendar;
+import project.piuda.domain.calendar.domain.CareCalendarRepository;
+import project.piuda.domain.calendar.domain.CalendarType;
 import project.piuda.domain.patient.domain.Patient;
 import project.piuda.domain.patient.domain.PatientMemberRepository;
 import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.domain.user.domain.Role;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.ForbiddenException;
+import project.piuda.global.exception.NotFoundException;
+import project.piuda.global.infrastructure.S3UploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,20 +33,22 @@ public class DailyLogService {
     private final PatientRepository patientRepository;
     private final PatientMemberRepository patientMemberRepository;
     private final UserRepository userRepository;
-    private final CareCalendarRepository careCalendarRepository; // ★ 캘린더 연동을 위해 주입 추가!
+    private final CareCalendarRepository careCalendarRepository;
+    private final S3UploadService s3UploadService;
 
-    // 1. 일지 등록 (+ 캘린더 자동 연동)
     @Transactional
-    public Long createDailyLog(Long patientId, String userEmail, DailyLogRequest request) {
+    public Long createDailyLog(Long patientId, String userEmail, DailyLogRequest request, MultipartFile image) throws IOException {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 환자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
         User writer = getUser(userEmail);
 
         validatePatientAccess(patient, writer);
 
         if (writer.getRole() != Role.CAREGIVER && request.getEmotionalCommunicationMinutes() > 0) {
-            throw new IllegalArgumentException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
+            throw new ForbiddenException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
         }
+
+        String imageUrl = (image != null && !image.isEmpty()) ? s3UploadService.upload(image, "daily-log") : null;
 
         DailyLog dailyLog = DailyLog.builder()
                 .patient(patient)
@@ -68,31 +75,27 @@ public class DailyLogService {
                 .bowelIncontinenceCount(request.getBowelIncontinenceCount())
                 .urineIncontinenceCount(request.getUrineIncontinenceCount())
                 .specialNotes(request.getSpecialNotes())
-                .imageUrl(request.getImageUrl()) // ★ [추가] 엔티티에 사진 주소 세팅
+                .imageUrl(imageUrl)
                 .build();
 
         DailyLog savedLog = dailyLogRepository.save(dailyLog);
 
-        // 🔗 [캘린더 기획 연동] 일지 작성 완료 시, 공유 달력 화면에 자동 도장(DAILY_LOG 타입)을 찍어줍니다.
-        CareCalendar autoCalendarStamp = CareCalendar.builder()
+        careCalendarRepository.save(CareCalendar.builder()
                 .patient(patient)
                 .writer(writer)
-                .dailyLog(savedLog) // 생성된 일지 외래키 매핑
+                .dailyLog(savedLog)
                 .title(writer.getName() + "님의 하루 일지 작성 완료")
-                .calendarType(CalendarType.DAILY_LOG) // 자동 마크 타입
+                .calendarType(CalendarType.DAILY_LOG)
                 .startTime(request.getLogDate().atTime(request.getStartTime()))
                 .endTime(request.getLogDate().atTime(request.getEndTime()))
-                .build();
-
-        careCalendarRepository.save(autoCalendarStamp);
+                .build());
 
         return savedLog.getId();
     }
 
-    // 2. 환자별 일지 목록 조회
     public List<DailyLogResponse> getDailyLogs(Long patientId, String userEmail) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 환자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
         User user = getUser(userEmail);
         validatePatientAccess(patient, user);
         return dailyLogRepository.findByPatientIdOrderByLogDateDesc(patientId).stream()
@@ -100,27 +103,27 @@ public class DailyLogService {
                 .collect(Collectors.toList());
     }
 
-    // 3. 일지 상세 조회
     public DailyLogResponse getDailyLogDetails(Long logId, String userEmail) {
         DailyLog log = dailyLogRepository.findById(logId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일지입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 일지입니다."));
         User user = getUser(userEmail);
         validatePatientAccess(log.getPatient(), user);
         return new DailyLogResponse(log);
     }
 
-    // 4. 일지 수정
     @Transactional
-    public void updateDailyLog(Long logId, String userEmail, DailyLogRequest request) {
+    public void updateDailyLog(Long logId, String userEmail, DailyLogRequest request, MultipartFile image) throws IOException {
         DailyLog log = dailyLogRepository.findById(logId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일지입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 일지입니다."));
         User writer = getUser(userEmail);
 
         validatePatientAccess(log.getPatient(), writer);
 
         if (writer.getRole() != Role.CAREGIVER && request.getEmotionalCommunicationMinutes() > 0) {
-            throw new IllegalArgumentException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
+            throw new ForbiddenException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
         }
+
+        String imageUrl = (image != null && !image.isEmpty()) ? s3UploadService.upload(image, "daily-log") : log.getImageUrl();
 
         log.update(
                 request.getStartTime(), request.getEndTime(),
@@ -133,15 +136,14 @@ public class DailyLogService {
                 request.getPhysicalFunctionTrend(), request.getMealFunctionTrend(),
                 request.getBowelIncontinenceCount(), request.getUrineIncontinenceCount(),
                 request.getSpecialNotes(),
-                request.getImageUrl() // ★ [추가] 엔티티 수정 파라미터 연동
+                imageUrl
         );
     }
 
-    // 5. 일지 삭제
     @Transactional
     public void deleteDailyLog(Long logId, String userEmail) {
         DailyLog log = dailyLogRepository.findById(logId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일지입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 일지입니다."));
         User user = getUser(userEmail);
         validatePatientAccess(log.getPatient(), user);
         careCalendarRepository.deleteByDailyLogId(logId);
@@ -150,12 +152,12 @@ public class DailyLogService {
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
     }
 
     private void validatePatientAccess(Patient patient, User user) {
         if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
-            throw new IllegalArgumentException("해당 환자에 대한 접근 권한이 없습니다.");
+            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
         }
     }
 }

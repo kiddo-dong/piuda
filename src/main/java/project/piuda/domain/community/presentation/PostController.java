@@ -1,15 +1,18 @@
 package project.piuda.domain.community.presentation;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.community.application.PostService;
 import project.piuda.domain.community.application.dto.PostRequest;
 import project.piuda.domain.community.application.dto.PostResponse;
 import project.piuda.domain.community.domain.PostCategory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -20,11 +23,12 @@ public class PostController {
 
     private final PostService postService;
 
-    @PostMapping
+    @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<Map<String, Long>> createPost(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody PostRequest request) {
-        Long postId = postService.createPost(userDetails.getUsername(), request);
+            @Valid @RequestPart("data") PostRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+        Long postId = postService.createPost(userDetails.getUsername(), request, image);
         return ResponseEntity.ok(Map.of("postId", postId));
     }
 
@@ -42,12 +46,13 @@ public class PostController {
         return ResponseEntity.ok(postService.getPost(postId, userDetails.getUsername()));
     }
 
-    @PutMapping("/{postId}")
+    @PutMapping(value = "/{postId}", consumes = "multipart/form-data")
     public ResponseEntity<Void> updatePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody PostRequest request) {
-        postService.updatePost(postId, userDetails.getUsername(), request);
+            @Valid @RequestPart("data") PostRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+        postService.updatePost(postId, userDetails.getUsername(), request, image);
         return ResponseEntity.ok().build();
     }
 

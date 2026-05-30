@@ -1,13 +1,13 @@
 package project.piuda.domain.user.presentation;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.user.application.UserService;
-import project.piuda.domain.user.application.dto.LoginRequest;
-import project.piuda.domain.user.application.dto.RankingResponse;
-import project.piuda.domain.user.application.dto.SignUpRequest;
-import project.piuda.domain.user.application.dto.TokenResponse;
+import project.piuda.domain.user.application.dto.*;
 
 import java.util.List;
 
@@ -19,14 +19,33 @@ public class UserController {
     private final UserService service;
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> signUp(@RequestBody SignUpRequest request) {
+    public ResponseEntity<Void> signUp(@Valid @RequestBody SignUpRequest request) {
         service.signUp(request);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(service.login(request));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(service.getMe(userDetails.getUsername()));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<Void> updateMe(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody UserUpdateRequest request) {
+        service.updateMe(userDetails.getUsername(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal UserDetails userDetails) {
+        service.deleteMe(userDetails.getUsername());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/ranking")

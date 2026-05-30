@@ -1,5 +1,6 @@
 package project.piuda.domain.patient.presentation;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import java.util.List;
@@ -19,45 +20,62 @@ public class PatientController {
     private final PatientService patientService;
     private final PatientMapper patientMapper;
 
+    @PostMapping
+    public ResponseEntity<PatientResponse> registerPatient(
+            @Valid @RequestBody PatientRegisterRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(patientService.registerPatient(request, userDetails.getId()));
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<PatientResponse> joinPatient(
+            @Valid @RequestBody PatientJoinRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(patientService.joinPatient(request, userDetails.getId()));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<PatientResponse>> getMyPatients(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(patientService.getMyPatients(userDetails.getId()));
+    }
+
     @GetMapping("/{patientId}")
     public ResponseEntity<PatientResponse> getPatientDetails(
             @PathVariable Long patientId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        PatientResponse response = patientService.getPatientDetails(patientId, userDetails.getId());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(patientService.getPatientDetails(patientId, userDetails.getId()));
+    }
+
+    @PutMapping("/{patientId}")
+    public ResponseEntity<PatientResponse> updatePatient(
+            @PathVariable Long patientId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody PatientRegisterRequest request) {
+        return ResponseEntity.ok(patientService.updatePatient(patientId, userDetails.getId(), request));
+    }
+
+    @DeleteMapping("/{patientId}")
+    public ResponseEntity<Void> deletePatient(
+            @PathVariable Long patientId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        patientService.deletePatient(patientId, userDetails.getId());
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{patientId}/devices")
     public ResponseEntity<Void> connectDevice(
             @PathVariable Long patientId,
             @RequestParam String deviceSerial) {
-
         patientService.connectDevice(patientId, deviceSerial);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping
-    public ResponseEntity<PatientResponse> registerPatient(
-            @RequestBody PatientRegisterRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) { // Security컨텍스트에서 유저 정보 추출
-
-        PatientResponse response = patientService.registerPatient(request, userDetails.getId());
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/join")
-    public ResponseEntity<PatientResponse> joinPatient(
-            @RequestBody PatientJoinRequest request,
+    @DeleteMapping("/{patientId}/devices")
+    public ResponseEntity<Void> disconnectDevice(
+            @PathVariable Long patientId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        PatientResponse response = patientService.joinPatient(request, userDetails.getId());
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/my")
-    public ResponseEntity<List<PatientResponse>> getMyPatients(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        return ResponseEntity.ok(patientService.getMyPatients(userDetails.getId()));
+        patientService.disconnectDevice(patientId, userDetails.getId());
+        return ResponseEntity.ok().build();
     }
 }

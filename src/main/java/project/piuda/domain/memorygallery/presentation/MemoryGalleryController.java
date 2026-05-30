@@ -30,7 +30,18 @@ public class MemoryGalleryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MemoryGalleryItem>> getGallery(@PathVariable Long patientId) {
-        return ResponseEntity.ok(memoryGalleryService.getGallery(patientId));
+    public ResponseEntity<List<MemoryGalleryItem>> getGallery(
+            @PathVariable Long patientId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(memoryGalleryService.getGallery(patientId, userDetails.getUsername()));
+    }
+
+    @DeleteMapping("/{galleryId}")
+    public ResponseEntity<Void> deletePhoto(
+            @PathVariable Long patientId,
+            @PathVariable Long galleryId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        memoryGalleryService.deletePhoto(galleryId, userDetails.getUsername());
+        return ResponseEntity.ok().build();
     }
 }
