@@ -1,13 +1,19 @@
 package project.piuda.domain.user.application;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.user.application.dto.LoginRequest;
+import project.piuda.domain.user.application.dto.RankingResponse;
 import project.piuda.domain.user.application.dto.SignUpRequest;
 import project.piuda.domain.user.application.dto.TokenResponse;
 import project.piuda.domain.user.domain.*;
+
+import java.util.ArrayList;
+import java.util.List;
 import project.piuda.global.security.JwtTokenProvider;
 
 @Service
@@ -18,7 +24,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final CaregiverProfileRepository caregiverProfileRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); // 암호화
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Transactional
     public void signUp(SignUpRequest request) {
@@ -56,5 +62,16 @@ public class UserService {
 
         String token = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
         return new TokenResponse(token);
+    }
+
+    @Cacheable(value = "ranking", key = "#limit")
+    public List<RankingResponse> getRanking(int limit) {
+        List<project.piuda.domain.user.domain.User> users =
+                userRepository.findAllByOrderByScoreDesc(PageRequest.of(0, limit));
+        List<RankingResponse> result = new ArrayList<>();
+        for (int i = 0; i < users.size(); i++) {
+            result.add(new RankingResponse(i + 1, users.get(i)));
+        }
+        return result;
     }
 }

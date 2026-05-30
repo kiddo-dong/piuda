@@ -3,9 +3,10 @@ package project.piuda.domain.user.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.io.Serializable;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = @Index(name = "idx_user_score", columnList = "score DESC"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
@@ -31,6 +32,9 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Column(nullable = false)
+    private int score;
+
     private LocalDateTime createdAt;
 
     @Builder
@@ -40,6 +44,15 @@ public class User {
         this.name = name;
         this.phone = phone;
         this.role = role;
+        this.score = 100;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void addScore(int amount) {
+        this.score += amount;
+    }
+
+    public void subtractScore(int amount) {
+        this.score = Math.max(0, this.score - amount);
     }
 }

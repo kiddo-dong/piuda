@@ -11,6 +11,7 @@ public class CommentResponse {
     private final String writerName;
     private final String writerRole;
     private final String content;
+    private final boolean adopted;
     private final LocalDateTime createdAt;
 
     public CommentResponse(Comment comment) {
@@ -18,6 +19,7 @@ public class CommentResponse {
         this.writerName = comment.getWriter().getName();
         this.writerRole = comment.getWriter().getRole().name();
         this.content = comment.getContent();
+        this.adopted = comment.isAdopted();
         this.createdAt = comment.getCreatedAt();
     }
 }

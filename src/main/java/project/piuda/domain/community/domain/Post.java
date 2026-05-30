@@ -36,6 +36,9 @@ public class Post {
     private int likeCount;
 
     @Column(nullable = false)
+    private boolean hasAdopted;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -48,7 +51,16 @@ public class Post {
         this.category = category;
         this.imageUrl = imageUrl;
         this.likeCount = 0;
+        this.hasAdopted = false;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void markAdopted() {
+        this.hasAdopted = true;
+    }
+
+    public void unmarkAdopted() {
+        this.hasAdopted = false;
     }
 
     public void update(String title, String content, PostCategory category, String imageUrl) {

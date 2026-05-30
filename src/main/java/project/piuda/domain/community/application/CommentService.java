@@ -1,6 +1,7 @@
 package project.piuda.domain.community.application;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.community.application.dto.CommentRequest;
@@ -56,5 +57,59 @@ public class CommentService {
             throw new IllegalArgumentException("본인의 댓글만 삭제할 수 있습니다.");
         }
         commentRepository.delete(comment);
+    }
+
+    @Transactional
+    @CacheEvict(value = "ranking", allEntries = true)
+    public void adoptComment(Long postId, Long commentId, String userEmail) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+        User requester = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (!post.getWriter().getId().equals(requester.getId())) {
+            throw new IllegalArgumentException("게시글 작성자만 채택할 수 있습니다.");
+        }
+        if (post.isHasAdopted()) {
+            throw new IllegalArgumentException("이미 채택된 게시글입니다.");
+        }
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new IllegalArgumentException("해당 게시글의 댓글이 아닙니다.");
+        }
+        if (comment.getWriter().getId().equals(requester.getId())) {
+            throw new IllegalArgumentException("본인의 댓글은 채택할 수 없습니다.");
+        }
+
+        comment.adopt();
+        post.markAdopted();
+        comment.getWriter().addScore(10);
+    }
+
+    @Transactional
+    @CacheEvict(value = "ranking", allEntries = true)
+    public void cancelAdoption(Long postId, Long commentId, String userEmail) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+        User requester = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (!post.getWriter().getId().equals(requester.getId())) {
+            throw new IllegalArgumentException("게시글 작성자만 채택을 취소할 수 있습니다.");
+        }
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        if (!comment.isAdopted()) {
+            throw new IllegalArgumentException("채택된 댓글이 아닙니다.");
+        }
+
+        comment.cancelAdoption();
+        post.unmarkAdopted();
+        comment.getWriter().subtractScore(10);
     }
 }

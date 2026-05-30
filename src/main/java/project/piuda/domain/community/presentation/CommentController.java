@@ -40,4 +40,22 @@ public class CommentController {
         commentService.deleteComment(commentId, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/posts/{postId}/comments/{commentId}/adopt")
+    public ResponseEntity<Void> adoptComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        commentService.adoptComment(postId, commentId, userDetails.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/posts/{postId}/comments/{commentId}/adopt")
+    public ResponseEntity<Void> cancelAdoption(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        commentService.cancelAdoption(postId, commentId, userDetails.getUsername());
+        return ResponseEntity.ok().build();
+    }
 }

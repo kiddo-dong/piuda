@@ -29,6 +29,9 @@ public class Comment {
     private String content;
 
     @Column(nullable = false)
+    private boolean isAdopted;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Builder
@@ -36,6 +39,15 @@ public class Comment {
         this.post = post;
         this.writer = writer;
         this.content = content;
+        this.isAdopted = false;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void adopt() {
+        this.isAdopted = true;
+    }
+
+    public void cancelAdoption() {
+        this.isAdopted = false;
     }
 }
