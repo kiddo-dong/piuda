@@ -110,4 +110,17 @@ public class PatientService {
                 .map(pm -> patientMapper.toResponseDto(pm.getPatient()))
                 .toList();
     }
+
+    public PatientResponse getPatientDetails(Long patientId, Long userId) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 환자입니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
+            throw new IllegalArgumentException("해당 환자에 대한 접근 권한이 없습니다.");
+        }
+
+        return patientMapper.toResponseDto(patient);
+    }
 }

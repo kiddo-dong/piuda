@@ -38,15 +38,18 @@ public class CareCalendarController {
     @PutMapping("/calendars/{calendarId}")
     public ResponseEntity<Void> updateSchedule(
             @PathVariable Long calendarId,
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody CareCalendarRequest request) {
-        careCalendarService.updateSchedule(calendarId, request);
+        careCalendarService.updateSchedule(calendarId, userDetails.getUsername(), request);
         return ResponseEntity.ok().build();
     }
 
     // 4. 일정 삭제
     @DeleteMapping("/calendars/{calendarId}")
-    public ResponseEntity<Void> deleteCalendarEvent(@PathVariable Long calendarId) {
-        careCalendarService.deleteCalendarEvent(calendarId);
+    public ResponseEntity<Void> deleteCalendarEvent(
+            @PathVariable Long calendarId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        careCalendarService.deleteCalendarEvent(calendarId, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 }

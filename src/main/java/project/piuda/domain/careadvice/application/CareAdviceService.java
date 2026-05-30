@@ -65,13 +65,7 @@ public class CareAdviceService {
         );
         Collections.reverse(recentHistory);
 
-        // 환자 정보 컨텍스트 생성
-        String patientContext = buildPatientContext(session.getPatient());
-
-        // GPT 호출
-        String aiResponse = openAiChatClient.sendMessage(recentHistory, request.getContent(), patientContext);
-
-        // 사용자 메시지 저장
+        // 사용자 메시지 먼저 저장 (GPT 호출 실패해도 기록 보존)
         CareAdviceMessage userMessage = messageRepository.save(
                 CareAdviceMessage.builder()
                         .session(session)
@@ -79,6 +73,10 @@ public class CareAdviceService {
                         .content(request.getContent())
                         .build()
         );
+
+        // 환자 정보 컨텍스트 생성 후 GPT 호출
+        String patientContext = buildPatientContext(session.getPatient());
+        String aiResponse = openAiChatClient.sendMessage(recentHistory, request.getContent(), patientContext);
 
         // AI 응답 저장
         CareAdviceMessage assistantMessage = messageRepository.save(

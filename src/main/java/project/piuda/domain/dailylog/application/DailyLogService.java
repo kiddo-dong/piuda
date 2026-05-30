@@ -10,6 +10,7 @@ import project.piuda.domain.calendar.domain.CalendarType; // ★ 캘린더 연�
 import project.piuda.domain.patient.domain.Patient;
 import project.piuda.domain.patient.domain.PatientMemberRepository;
 import project.piuda.domain.patient.domain.PatientRepository;
+import project.piuda.domain.user.domain.Role;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,7 @@ public class DailyLogService {
 
         validatePatientAccess(patient, writer);
 
-        if (!"CAREGIVER".equals(writer.getRole().name()) && request.getEmotionalCommunicationMinutes() > 0) {
+        if (writer.getRole() != Role.CAREGIVER && request.getEmotionalCommunicationMinutes() > 0) {
             throw new IllegalArgumentException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
         }
 
@@ -117,7 +118,7 @@ public class DailyLogService {
 
         validatePatientAccess(log.getPatient(), writer);
 
-        if (!"CAREGIVER".equals(writer.getRole().name()) && request.getEmotionalCommunicationMinutes() > 0) {
+        if (writer.getRole() != Role.CAREGIVER && request.getEmotionalCommunicationMinutes() > 0) {
             throw new IllegalArgumentException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
         }
 
@@ -143,6 +144,7 @@ public class DailyLogService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일지입니다."));
         User user = getUser(userEmail);
         validatePatientAccess(log.getPatient(), user);
+        careCalendarRepository.deleteByDailyLogId(logId);
         dailyLogRepository.delete(log);
     }
 

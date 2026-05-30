@@ -9,8 +9,6 @@ import project.piuda.domain.patient.application.PatientService;
 import project.piuda.domain.patient.application.dto.PatientJoinRequest;
 import project.piuda.domain.patient.application.dto.PatientRegisterRequest;
 import project.piuda.domain.patient.application.dto.PatientResponse;
-import project.piuda.domain.patient.domain.Patient;
-import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.global.security.CustomUserDetails;
 
 @RestController
@@ -19,17 +17,13 @@ import project.piuda.global.security.CustomUserDetails;
 public class PatientController {
 
     private final PatientService patientService;
-    private final PatientRepository patientRepository; // 단순 조환은 서비스 안 거치고 바로 조회하기도 함(CQRS 가벼운 적용)
     private final PatientMapper patientMapper;
 
     @GetMapping("/{patientId}")
-    public ResponseEntity<PatientResponse> getPatientDetails(@PathVariable Long patientId) {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new IllegalArgumentException("환자를 찾을 수 없습니다."));
-
-        // MapStruct를 이용한 DTO 변환
-        PatientResponse response = patientMapper.toResponseDto(patient);
-
+    public ResponseEntity<PatientResponse> getPatientDetails(
+            @PathVariable Long patientId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        PatientResponse response = patientService.getPatientDetails(patientId, userDetails.getId());
         return ResponseEntity.ok(response);
     }
 

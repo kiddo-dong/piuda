@@ -65,9 +65,15 @@ public class CareCalendarService {
 
     // 3. 수동 일정 수정
     @Transactional
-    public void updateSchedule(Long calendarId, CareCalendarRequest request) {
+    public void updateSchedule(Long calendarId, String userEmail, CareCalendarRequest request) {
         CareCalendar calendar = careCalendarRepository.findById(calendarId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+        User requester = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (!calendar.getWriter().getId().equals(requester.getId())) {
+            throw new IllegalArgumentException("본인이 작성한 일정만 수정할 수 있습니다.");
+        }
 
         User assignee = null;
         if (request.getAssigneeId() != null) {
@@ -75,7 +81,6 @@ public class CareCalendarService {
                     .orElseThrow(() -> new IllegalArgumentException("지정된 담당자가 존재하지 않는 유저입니다."));
         }
 
-        // 엔티티 내부 비즈니스 로직 호출 (DAILY_LOG 유형 수정 시 예외 처리는 엔티티에 캡슐화 완료)
         calendar.updateSchedule(
                 request.getTitle(),
                 request.getContent(),
@@ -88,9 +93,16 @@ public class CareCalendarService {
 
     // 4. 일정 삭제
     @Transactional
-    public void deleteCalendarEvent(Long calendarId) {
+    public void deleteCalendarEvent(Long calendarId, String userEmail) {
         CareCalendar calendar = careCalendarRepository.findById(calendarId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 일정입니다."));
+        User requester = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (!calendar.getWriter().getId().equals(requester.getId())) {
+            throw new IllegalArgumentException("본인이 작성한 일정만 삭제할 수 있습니다.");
+        }
+
         careCalendarRepository.delete(calendar);
     }
 }
