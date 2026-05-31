@@ -7,4 +7,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PatientJoinRequest {
     private String inviteCode;
+    private String relationship;
 }

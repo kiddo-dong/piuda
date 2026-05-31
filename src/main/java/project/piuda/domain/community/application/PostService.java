@@ -42,19 +42,18 @@ public class PostService {
         return postRepository.save(post).getId();
     }
 
-    public List<PostResponse> getPosts(String userEmail, PostCategory category) {
+    public List<PostResponse> getPosts(String userEmail, PostCategory category, String keyword) {
         User user = getUser(userEmail);
-        List<Post> posts = (category == null)
-                ? postRepository.findAllByOrderByCreatedAtDesc()
-                : postRepository.findAllByCategoryOrderByCreatedAtDesc(category);
-        return posts.stream()
+        return postRepository.searchPosts(category, keyword).stream()
                 .map(post -> new PostResponse(post, postLikeRepository.existsByPostIdAndUserId(post.getId(), user.getId())))
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public PostResponse getPost(Long postId, String userEmail) {
         User user = getUser(userEmail);
         Post post = getPostOrThrow(postId);
+        post.increaseViewCount();
         return new PostResponse(post, postLikeRepository.existsByPostIdAndUserId(postId, user.getId()));
     }
 

@@ -1,9 +1,6 @@
 package project.piuda.domain.user.application.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import project.piuda.domain.user.domain.Role;
@@ -17,18 +14,31 @@ public class SignUpRequest {
     private String email;
 
     @NotBlank(message = "비밀번호를 입력해주세요.")
-    @Size(min = 4, message = "비밀번호는 4자 이상이어야 합니다.")
+    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$",
+             message = "비밀번호는 8자 이상이며 영문과 숫자를 포함해야 합니다.")
     private String password;
+
+    @NotBlank(message = "비밀번호 확인을 입력해주세요.")
+    private String passwordConfirm;
 
     @NotBlank(message = "이름을 입력해주세요.")
     private String name;
 
-    @NotBlank(message = "전화번호를 입력해주세요.")
+    @NotBlank(message = "닉네임을 입력해주세요.")
+    @Size(min = 2, max = 20, message = "닉네임은 2자 이상 20자 이하이어야 합니다.")
+    private String nickname;
+
     private String phone;
+    private String profileImageUrl;
+    private String introduction;
 
     @NotNull(message = "역할을 선택해주세요.")
     private Role role;
 
     private Integer experienceYears;
-    private String introduction;
+
+    @AssertTrue(message = "비밀번호가 일치하지 않습니다.")
+    public boolean isPasswordMatching() {
+        return password != null && password.equals(passwordConfirm);
+    }
 }

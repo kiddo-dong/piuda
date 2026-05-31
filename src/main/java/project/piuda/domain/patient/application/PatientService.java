@@ -75,6 +75,7 @@ public class PatientService {
         patientMemberRepository.save(PatientMember.builder()
                 .patient(savedPatient)
                 .user(protector)
+                .relationship(request.getRelationship())
                 .build());
 
         return patientMapper.toResponseDto(savedPatient);
@@ -92,7 +93,11 @@ public class PatientService {
             throw new ConflictException("이미 연결된 환자입니다.");
         }
 
-        patientMemberRepository.save(PatientMember.builder().patient(patient).user(user).build());
+        patientMemberRepository.save(PatientMember.builder()
+                .patient(patient)
+                .user(user)
+                .relationship(request.getRelationship())
+                .build());
         return patientMapper.toResponseDto(patient);
     }
 

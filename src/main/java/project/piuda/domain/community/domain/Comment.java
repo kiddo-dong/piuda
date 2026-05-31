@@ -25,6 +25,10 @@ public class Comment {
     @JoinColumn(name = "writer_id", nullable = false)
     private User writer;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private Comment parentComment;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
@@ -35,9 +39,10 @@ public class Comment {
     private LocalDateTime createdAt;
 
     @Builder
-    public Comment(Post post, User writer, String content) {
+    public Comment(Post post, User writer, Comment parentComment, String content) {
         this.post = post;
         this.writer = writer;
+        this.parentComment = parentComment;
         this.content = content;
         this.isAdopted = false;
         this.createdAt = LocalDateTime.now();

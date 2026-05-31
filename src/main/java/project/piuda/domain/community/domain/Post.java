@@ -36,6 +36,9 @@ public class Post {
     private int likeCount;
 
     @Column(nullable = false)
+    private int viewCount;
+
+    @Column(nullable = false)
     private boolean hasAdopted;
 
     @Column(nullable = false)
@@ -51,6 +54,7 @@ public class Post {
         this.category = category;
         this.imageUrl = imageUrl;
         this.likeCount = 0;
+        this.viewCount = 0;
         this.hasAdopted = false;
         this.createdAt = LocalDateTime.now();
     }
@@ -69,6 +73,10 @@ public class Post {
         this.category = category;
         this.imageUrl = imageUrl;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void increaseViewCount() {
+        this.viewCount++;
     }
 
     public void increaseLike() {

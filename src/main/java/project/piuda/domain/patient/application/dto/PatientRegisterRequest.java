@@ -23,4 +23,6 @@ public class PatientRegisterRequest {
 
     @NotBlank(message = "치매 단계를 입력해주세요.")
     private String dementiaStage;
+
+    private String relationship;
 }

@@ -118,6 +118,7 @@ public class DailyLogService {
         User writer = getUser(userEmail);
 
         validatePatientAccess(log.getPatient(), writer);
+        validateWriter(log, writer);
 
         if (writer.getRole() != Role.CAREGIVER && request.getEmotionalCommunicationMinutes() > 0) {
             throw new ForbiddenException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
@@ -146,6 +147,7 @@ public class DailyLogService {
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 일지입니다."));
         User user = getUser(userEmail);
         validatePatientAccess(log.getPatient(), user);
+        validateWriter(log, user);
         careCalendarRepository.deleteByDailyLogId(logId);
         dailyLogRepository.delete(log);
     }
@@ -158,6 +160,12 @@ public class DailyLogService {
     private void validatePatientAccess(Patient patient, User user) {
         if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
             throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
+        }
+    }
+
+    private void validateWriter(DailyLog log, User user) {
+        if (!log.getWriter().getId().equals(user.getId())) {
+            throw new ForbiddenException("본인이 작성한 일지만 수정/삭제할 수 있습니다.");
         }
     }
 }

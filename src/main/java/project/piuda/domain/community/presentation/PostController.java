@@ -35,8 +35,9 @@ public class PostController {
     @GetMapping
     public ResponseEntity<List<PostResponse>> getPosts(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(required = false) PostCategory category) {
-        return ResponseEntity.ok(postService.getPosts(userDetails.getUsername(), category));
+            @RequestParam(required = false) PostCategory category,
+            @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(postService.getPosts(userDetails.getUsername(), category, keyword));
     }
 
     @GetMapping("/{postId}")

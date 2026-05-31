@@ -48,6 +48,11 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/check-nickname")
+    public ResponseEntity<Boolean> checkNickname(@RequestParam String nickname) {
+        return ResponseEntity.ok(service.checkNickname(nickname));
+    }
+
     @GetMapping("/ranking")
     public ResponseEntity<List<RankingResponse>> getRanking(
             @RequestParam(defaultValue = "10") int limit) {

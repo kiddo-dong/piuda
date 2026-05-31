@@ -36,12 +36,18 @@ public class UserService {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new ConflictException("이미 존재하는 이메일입니다.");
         }
+        if (userRepository.existsByNickname(request.getNickname())) {
+            throw new ConflictException("이미 사용 중인 닉네임입니다.");
+        }
 
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
+                .nickname(request.getNickname())
                 .phone(request.getPhone())
+                .profileImageUrl(request.getProfileImageUrl())
+                .introduction(request.getIntroduction())
                 .role(request.getRole())
                 .build();
         userRepository.save(user);
@@ -50,10 +56,13 @@ public class UserService {
             CaregiverProfile profile = CaregiverProfile.builder()
                     .user(user)
                     .experienceYears(request.getExperienceYears() != null ? request.getExperienceYears() : 0)
-                    .introduction(request.getIntroduction())
                     .build();
             caregiverProfileRepository.save(profile);
         }
+    }
+
+    public boolean checkNickname(String nickname) {
+        return !userRepository.existsByNickname(nickname);
     }
 
     public TokenResponse login(LoginRequest request) {
@@ -78,9 +87,15 @@ public class UserService {
     public void updateMe(String email, UserUpdateRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        if (request.getNickname() != null && !request.getNickname().isBlank()
+                && !request.getNickname().equals(user.getNickname())
+                && userRepository.existsByNickname(request.getNickname())) {
+            throw new ConflictException("이미 사용 중인 닉네임입니다.");
+        }
         String encodedPassword = request.getPassword() != null && !request.getPassword().isBlank()
                 ? passwordEncoder.encode(request.getPassword()) : null;
-        user.update(request.getName(), request.getPhone(), encodedPassword);
+        user.update(request.getName(), request.getNickname(), request.getPhone(),
+                request.getProfileImageUrl(), request.getIntroduction(), encodedPassword);
     }
 
     @Transactional

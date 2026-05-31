@@ -34,17 +34,36 @@ public class CommentService {
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 게시글입니다."));
         User writer = getUser(userEmail);
 
+        Comment parentComment = null;
+        if (request.getParentCommentId() != null) {
+            parentComment = commentRepository.findById(request.getParentCommentId())
+                    .orElseThrow(() -> new NotFoundException("존재하지 않는 댓글입니다."));
+            if (!parentComment.getPost().getId().equals(postId)) {
+                throw new BusinessException("해당 게시글의 댓글이 아닙니다.");
+            }
+            if (parentComment.getParentComment() != null) {
+                throw new BusinessException("대댓글에는 답글을 달 수 없습니다.");
+            }
+        }
+
         Comment comment = Comment.builder()
                 .post(post)
                 .writer(writer)
+                .parentComment(parentComment)
                 .content(request.getContent())
                 .build();
         return commentRepository.save(comment).getId();
     }
 
     public List<CommentResponse> getComments(Long postId) {
-        return commentRepository.findByPostIdOrderByCreatedAtAsc(postId).stream()
-                .map(CommentResponse::new)
+        return commentRepository.findByPostIdAndParentCommentIsNullOrderByCreatedAtAsc(postId).stream()
+                .map(comment -> {
+                    List<CommentResponse> replies = commentRepository
+                            .findByParentCommentIdOrderByCreatedAtAsc(comment.getId()).stream()
+                            .map(reply -> new CommentResponse(reply, List.of()))
+                            .collect(Collectors.toList());
+                    return new CommentResponse(comment, replies);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -91,6 +110,9 @@ public class CommentService {
 
         if (!comment.getPost().getId().equals(postId)) {
             throw new BusinessException("해당 게시글의 댓글이 아닙니다.");
+        }
+        if (comment.getParentComment() != null) {
+            throw new BusinessException("대댓글은 채택할 수 없습니다.");
         }
         if (comment.getWriter().getId().equals(requester.getId())) {
             throw new BusinessException("본인의 댓글은 채택할 수 없습니다.");

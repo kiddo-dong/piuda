@@ -20,14 +20,10 @@ public class CaregiverProfile {
     private int innerScore;
     private int experienceYears;
 
-    @Column(columnDefinition = "TEXT")
-    private String introduction;
-
     @Builder
-    public CaregiverProfile(User user, int experienceYears, String introduction) {
+    public CaregiverProfile(User user, int experienceYears) {
         this.user = user;
         this.experienceYears = experienceYears;
-        this.introduction = introduction;
     }
 
     public void addScore(int score) {

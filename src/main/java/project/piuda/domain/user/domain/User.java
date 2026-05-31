@@ -25,8 +25,17 @@ public class User {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, unique = true, length = 50)
+    private String nickname;
+
+    @Column(length = 20)
     private String phone;
+
+    @Column(length = 512)
+    private String profileImageUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String introduction;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -38,11 +47,15 @@ public class User {
     private LocalDateTime createdAt;
 
     @Builder
-    public User(String email, String password, String name, String phone, Role role) {
+    public User(String email, String password, String name, String nickname, String phone,
+                String profileImageUrl, String introduction, Role role) {
         this.email = email;
         this.password = password;
         this.name = name;
+        this.nickname = nickname;
         this.phone = phone;
+        this.profileImageUrl = profileImageUrl;
+        this.introduction = introduction;
         this.role = role;
         this.score = 100;
         this.createdAt = LocalDateTime.now();
@@ -56,9 +69,13 @@ public class User {
         this.score = Math.max(0, this.score - amount);
     }
 
-    public void update(String name, String phone, String encodedPassword) {
+    public void update(String name, String nickname, String phone, String profileImageUrl,
+                       String introduction, String encodedPassword) {
         if (name != null && !name.isBlank()) this.name = name;
+        if (nickname != null && !nickname.isBlank()) this.nickname = nickname;
         if (phone != null && !phone.isBlank()) this.phone = phone;
+        if (profileImageUrl != null && !profileImageUrl.isBlank()) this.profileImageUrl = profileImageUrl;
+        if (introduction != null) this.introduction = introduction;
         if (encodedPassword != null) this.password = encodedPassword;
     }
 }
