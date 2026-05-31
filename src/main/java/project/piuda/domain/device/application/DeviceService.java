@@ -41,7 +41,7 @@ public class DeviceService {
         Patient patient = patientRepository.findByDeviceDeviceSerial(deviceSerial)
                 .orElseThrow(() -> new IllegalArgumentException("해당 시리얼의 디바이스에 연동된 환자가 없습니다."));
 
-        String audioUrl = s3UploadService.upload(audioFile, "voice-records");
+        String audioUrl = s3UploadService.uploadAudio(audioFile, "voice-records");
 
         VoiceRecord voiceRecord = VoiceRecord.builder()
                 .patient(patient)

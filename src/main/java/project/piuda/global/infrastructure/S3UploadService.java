@@ -20,8 +20,14 @@ import java.util.UUID;
 public class S3UploadService {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-    private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
+    private static final List<String> ALLOWED_IMAGE_TYPES = List.of(
             "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
+    );
+    private static final List<String> ALLOWED_AUDIO_TYPES = List.of(
+            "audio/wav", "audio/wave", "audio/x-wav",
+            "audio/mpeg", "audio/mp3",
+            "audio/mp4", "audio/aac",
+            "audio/ogg", "audio/webm"
     );
 
     private final AmazonS3 amazonS3Client;
@@ -30,22 +36,41 @@ public class S3UploadService {
     private String bucket;
 
     public String upload(MultipartFile multipartFile, String dirName) throws IOException {
-        validateFile(multipartFile);
+        validateImage(multipartFile);
         File uploadFile = convert(multipartFile)
                 .orElseThrow(() -> new BusinessException("파일 변환에 실패했습니다."));
         return upload(uploadFile, dirName);
     }
 
-    private void validateFile(MultipartFile file) {
+    public String uploadAudio(MultipartFile multipartFile, String dirName) throws IOException {
+        validateAudio(multipartFile);
+        File uploadFile = convert(multipartFile)
+                .orElseThrow(() -> new BusinessException("파일 변환에 실패했습니다."));
+        return upload(uploadFile, dirName);
+    }
+
+    private void validateImage(MultipartFile file) {
+        validateNotEmpty(file);
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            throw new BusinessException("지원하지 않는 파일 형식입니다. (jpg, png, gif, webp만 허용)");
+        }
+    }
+
+    private void validateAudio(MultipartFile file) {
+        validateNotEmpty(file);
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_AUDIO_TYPES.contains(contentType)) {
+            throw new BusinessException("지원하지 않는 파일 형식입니다. (wav, mp3, mp4, aac, ogg, webm만 허용)");
+        }
+    }
+
+    private void validateNotEmpty(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException("파일이 비어있습니다.");
         }
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new BusinessException("파일 크기는 10MB를 초과할 수 없습니다.");
-        }
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new BusinessException("지원하지 않는 파일 형식입니다. (jpg, png, gif, webp만 허용)");
         }
     }
 
