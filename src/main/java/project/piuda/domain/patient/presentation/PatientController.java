@@ -8,7 +8,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.patient.application.PatientService;
 import project.piuda.domain.patient.application.dto.PatientJoinRequest;
-import project.piuda.domain.patient.application.dto.PatientRegisterRequest;
+import project.piuda.domain.patient.application.dto.PatientCreateRequest;
+import project.piuda.domain.patient.application.dto.PatientUpdateRequest;
 import project.piuda.domain.patient.application.dto.PatientResponse;
 import project.piuda.global.security.CustomUserDetails;
 
@@ -22,7 +23,7 @@ public class PatientController {
 
     @PostMapping
     public ResponseEntity<PatientResponse> registerPatient(
-            @Valid @RequestBody PatientRegisterRequest request,
+            @Valid @RequestBody PatientCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(patientService.registerPatient(request, userDetails.getId()));
     }
@@ -51,7 +52,7 @@ public class PatientController {
     public ResponseEntity<PatientResponse> updatePatient(
             @PathVariable Long patientId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody PatientRegisterRequest request) {
+            @Valid @RequestBody PatientUpdateRequest request) {
         return ResponseEntity.ok(patientService.updatePatient(patientId, userDetails.getId(), request));
     }
 

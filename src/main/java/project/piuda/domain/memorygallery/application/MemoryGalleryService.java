@@ -4,7 +4,8 @@ import project.piuda.domain.dailylog.domain.DailyLog;
 import project.piuda.domain.dailylog.domain.DailyLogRepository;
 import project.piuda.domain.device.domain.VoiceRecord;
 import project.piuda.domain.device.domain.VoiceRecordRepository;
-import project.piuda.domain.memorygallery.application.dto.MemoryGalleryItem;
+import project.piuda.domain.memorygallery.application.dto.AudioGalleryItem;
+import project.piuda.domain.memorygallery.application.dto.PhotoGalleryItem;
 import project.piuda.domain.memorygallery.domain.MemoryGallery;
 import project.piuda.domain.memorygallery.domain.MemoryGalleryRepository;
 import project.piuda.domain.patient.domain.Patient;
@@ -54,32 +55,32 @@ public class MemoryGalleryService {
                 .build());
     }
 
-    public List<MemoryGalleryItem> getPhotoGallery(Long patientId, String userEmail) {
+    public List<PhotoGalleryItem> getPhotoGallery(Long patientId, String userEmail) {
         Patient patient = getPatient(patientId);
         validatePatientAccess(patient, getUser(userEmail));
 
-        List<MemoryGalleryItem> items = new ArrayList<>();
+        List<PhotoGalleryItem> items = new ArrayList<>();
 
         for (DailyLog log : dailyLogRepository.findByPatientIdAndImageUrlIsNotNullOrderByLogDateDesc(patientId)) {
             LocalDateTime recordedAt = log.getLogDate().atTime(log.getStartTime());
-            items.add(MemoryGalleryItem.ofDailyLogImage(log.getImageUrl(), recordedAt, log.getWriter().getNickname()));
+            items.add(PhotoGalleryItem.ofDailyLogImage(log.getImageUrl(), recordedAt, log.getWriter().getNickname()));
         }
 
         for (MemoryGallery gallery : memoryGalleryRepository.findAllByPatientIdOrderByUploadedAtDesc(patientId)) {
-            items.add(MemoryGalleryItem.ofGalleryImage(gallery.getId(), gallery.getImageUrl(), gallery.getUploadedAt(), gallery.getWriter().getNickname()));
+            items.add(PhotoGalleryItem.ofGalleryImage(gallery.getId(), gallery.getImageUrl(), gallery.getUploadedAt(), gallery.getWriter().getNickname()));
         }
 
-        items.sort(Comparator.comparing(MemoryGalleryItem::getRecordedAt).reversed());
+        items.sort(Comparator.comparing(PhotoGalleryItem::getRecordedAt).reversed());
         return items;
     }
 
-    public List<MemoryGalleryItem> getAudioGallery(Long patientId, String userEmail) {
+    public List<AudioGalleryItem> getAudioGallery(Long patientId, String userEmail) {
         Patient patient = getPatient(patientId);
         validatePatientAccess(patient, getUser(userEmail));
 
-        List<MemoryGalleryItem> items = new ArrayList<>();
+        List<AudioGalleryItem> items = new ArrayList<>();
         for (VoiceRecord voice : voiceRecordRepository.findAllByPatientIdOrderByRecordedAtDesc(patientId)) {
-            items.add(MemoryGalleryItem.ofAudio(voice.getId(), voice.getAudioUrl(), voice.getRecordedAt()));
+            items.add(AudioGalleryItem.of(voice.getId(), voice.getAudioUrl(), voice.getRecordedAt()));
         }
         return items;
     }

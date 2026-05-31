@@ -3,13 +3,11 @@ package project.piuda.domain.dailylog.application.dto;
 import project.piuda.domain.dailylog.domain.HealthTrend;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Getter
 @NoArgsConstructor
-public class DailyLogRequest {
-    private LocalDate logDate;
+public class DailyLogUpdateRequest {
     private LocalTime startTime;
     private LocalTime endTime;
 
@@ -25,7 +23,7 @@ public class DailyLogRequest {
     private int cognitiveLifeTogetherMinutes;
     private int cognitiveBehaviorManagementMinutes;
 
-    private int emotionalCommunicationMinutes; // 간병인 아닐 시 0 처리 혹은 검증
+    private int emotionalCommunicationMinutes;
 
     private boolean householdMealClean;
     private boolean householdPersonalHelp;

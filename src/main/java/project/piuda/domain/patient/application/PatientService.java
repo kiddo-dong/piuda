@@ -8,7 +8,8 @@ import project.piuda.domain.device.domain.DeviceRepository;
 import project.piuda.domain.patientmemory.domain.PatientMemory;
 import project.piuda.domain.patientmemory.domain.PatientMemoryRepository;
 import project.piuda.domain.patient.application.dto.PatientJoinRequest;
-import project.piuda.domain.patient.application.dto.PatientRegisterRequest;
+import project.piuda.domain.patient.application.dto.PatientCreateRequest;
+import project.piuda.domain.patient.application.dto.PatientUpdateRequest;
 import project.piuda.domain.patient.application.dto.PatientResponse;
 import project.piuda.global.exception.ConflictException;
 import project.piuda.global.exception.ForbiddenException;
@@ -58,7 +59,7 @@ public class PatientService {
     }
 
     @Transactional
-    public PatientResponse registerPatient(PatientRegisterRequest request, Long protectorId) {
+    public PatientResponse registerPatient(PatientCreateRequest request, Long protectorId) {
         User protector = userRepository.findById(protectorId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 회원입니다."));
 
@@ -108,7 +109,7 @@ public class PatientService {
     }
 
     @Transactional
-    public PatientResponse updatePatient(Long patientId, Long userId, PatientRegisterRequest request) {
+    public PatientResponse updatePatient(Long patientId, Long userId, PatientUpdateRequest request) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
         User user = userRepository.findById(userId)

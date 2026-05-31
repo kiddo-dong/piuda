@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
-public class PatientRegisterRequest {
+public class PatientUpdateRequest {
 
     @NotBlank(message = "환자 이름을 입력해주세요.")
     private String name;
@@ -23,6 +23,4 @@ public class PatientRegisterRequest {
 
     @NotBlank(message = "치매 단계를 입력해주세요.")
     private String dementiaStage;
-
-    private String relationship;
 }

@@ -1,7 +1,8 @@
 package project.piuda.domain.memorygallery.presentation;
 
 import project.piuda.domain.memorygallery.application.MemoryGalleryService;
-import project.piuda.domain.memorygallery.application.dto.MemoryGalleryItem;
+import project.piuda.domain.memorygallery.application.dto.AudioGalleryItem;
+import project.piuda.domain.memorygallery.application.dto.PhotoGalleryItem;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,7 +33,7 @@ public class MemoryGalleryController {
 
     // 사진 갤러리 조회 (직접 올린 사진 + 일지 첨부 사진)
     @GetMapping("/photos")
-    public ResponseEntity<List<MemoryGalleryItem>> getPhotoGallery(
+    public ResponseEntity<List<PhotoGalleryItem>> getPhotoGallery(
             @PathVariable Long patientId,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(memoryGalleryService.getPhotoGallery(patientId, userDetails.getUsername()));
@@ -50,7 +51,7 @@ public class MemoryGalleryController {
 
     // 음성 갤러리 조회
     @GetMapping("/audio")
-    public ResponseEntity<List<MemoryGalleryItem>> getAudioGallery(
+    public ResponseEntity<List<AudioGalleryItem>> getAudioGallery(
             @PathVariable Long patientId,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(memoryGalleryService.getAudioGallery(patientId, userDetails.getUsername()));

@@ -1,7 +1,8 @@
 package project.piuda.domain.dailylog.presentation;
 
 import project.piuda.domain.dailylog.application.DailyLogService;
-import project.piuda.domain.dailylog.application.dto.DailyLogRequest;
+import project.piuda.domain.dailylog.application.dto.DailyLogCreateRequest;
+import project.piuda.domain.dailylog.application.dto.DailyLogUpdateRequest;
 import project.piuda.domain.dailylog.application.dto.DailyLogResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class DailyLogController {
     public ResponseEntity<Long> createDailyLog(
             @PathVariable Long patientId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestPart("data") DailyLogRequest request,
+            @RequestPart("data") DailyLogCreateRequest request,
             @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
 
         Long logId = dailyLogService.createDailyLog(patientId, userDetails.getUsername(), request, image);
@@ -52,7 +53,7 @@ public class DailyLogController {
     public ResponseEntity<Void> updateDailyLog(
             @PathVariable Long logId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestPart("data") DailyLogRequest request,
+            @RequestPart("data") DailyLogUpdateRequest request,
             @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
 
         dailyLogService.updateDailyLog(logId, userDetails.getUsername(), request, image);

@@ -1,6 +1,7 @@
 package project.piuda.domain.dailylog.application;
 
-import project.piuda.domain.dailylog.application.dto.DailyLogRequest;
+import project.piuda.domain.dailylog.application.dto.DailyLogCreateRequest;
+import project.piuda.domain.dailylog.application.dto.DailyLogUpdateRequest;
 import project.piuda.domain.dailylog.application.dto.DailyLogResponse;
 import project.piuda.domain.dailylog.domain.DailyLog;
 import project.piuda.domain.dailylog.domain.DailyLogRepository;
@@ -37,7 +38,7 @@ public class DailyLogService {
     private final S3UploadService s3UploadService;
 
     @Transactional
-    public Long createDailyLog(Long patientId, String userEmail, DailyLogRequest request, MultipartFile image) throws IOException {
+    public Long createDailyLog(Long patientId, String userEmail, DailyLogCreateRequest request, MultipartFile image) throws IOException {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
         User writer = getUser(userEmail);
@@ -112,7 +113,7 @@ public class DailyLogService {
     }
 
     @Transactional
-    public void updateDailyLog(Long logId, String userEmail, DailyLogRequest request, MultipartFile image) throws IOException {
+    public void updateDailyLog(Long logId, String userEmail, DailyLogUpdateRequest request, MultipartFile image) throws IOException {
         DailyLog log = dailyLogRepository.findById(logId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 일지입니다."));
         User writer = getUser(userEmail);
