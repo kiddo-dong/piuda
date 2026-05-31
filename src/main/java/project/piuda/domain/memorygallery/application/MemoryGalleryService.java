@@ -69,11 +69,11 @@ public class MemoryGalleryService {
 
         for (DailyLog log : dailyLogRepository.findByPatientIdAndImageUrlIsNotNullOrderByLogDateDesc(patientId)) {
             LocalDateTime recordedAt = log.getLogDate().atTime(log.getStartTime());
-            items.add(MemoryGalleryItem.ofImage(log.getImageUrl(), recordedAt, log.getWriter().getName()));
+            items.add(MemoryGalleryItem.ofDailyLogImage(log.getImageUrl(), recordedAt, log.getWriter().getNickname()));
         }
 
         for (MemoryGallery gallery : memoryGalleryRepository.findAllByPatientIdOrderByUploadedAtDesc(patientId)) {
-            items.add(MemoryGalleryItem.ofImage(gallery.getImageUrl(), gallery.getUploadedAt(), gallery.getWriter().getName()));
+            items.add(MemoryGalleryItem.ofGalleryImage(gallery.getId(), gallery.getImageUrl(), gallery.getUploadedAt(), gallery.getWriter().getNickname()));
         }
 
         for (VoiceRecord voice : voiceRecordRepository.findAllByPatientIdOrderByRecordedAtDesc(patientId)) {

@@ -8,23 +8,29 @@ public class MemoryGalleryItem {
 
     public enum MediaType { IMAGE, AUDIO }
 
+    private final Long galleryId;           // MemoryGallery 직접 등록 항목만 존재, 일지/음성은 null
     private final MediaType type;
     private final String url;
-    private final LocalDateTime recordedAt; // 정렬 및 표시용 기준 시각
-    private final String writerName;        // 이미지의 경우 일지 작성자, 음성은 null
+    private final LocalDateTime recordedAt;
+    private final String writerNickname;
 
-    private MemoryGalleryItem(MediaType type, String url, LocalDateTime recordedAt, String writerName) {
+    private MemoryGalleryItem(Long galleryId, MediaType type, String url, LocalDateTime recordedAt, String writerNickname) {
+        this.galleryId = galleryId;
         this.type = type;
         this.url = url;
         this.recordedAt = recordedAt;
-        this.writerName = writerName;
+        this.writerNickname = writerNickname;
     }
 
-    public static MemoryGalleryItem ofImage(String imageUrl, LocalDateTime recordedAt, String writerName) {
-        return new MemoryGalleryItem(MediaType.IMAGE, imageUrl, recordedAt, writerName);
+    public static MemoryGalleryItem ofGalleryImage(Long galleryId, String imageUrl, LocalDateTime recordedAt, String writerNickname) {
+        return new MemoryGalleryItem(galleryId, MediaType.IMAGE, imageUrl, recordedAt, writerNickname);
+    }
+
+    public static MemoryGalleryItem ofDailyLogImage(String imageUrl, LocalDateTime recordedAt, String writerNickname) {
+        return new MemoryGalleryItem(null, MediaType.IMAGE, imageUrl, recordedAt, writerNickname);
     }
 
     public static MemoryGalleryItem ofAudio(String audioUrl, LocalDateTime recordedAt) {
-        return new MemoryGalleryItem(MediaType.AUDIO, audioUrl, recordedAt, null);
+        return new MemoryGalleryItem(null, MediaType.AUDIO, audioUrl, recordedAt, null);
     }
 }
