@@ -10,9 +10,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import project.piuda.global.security.CustomUserDetailsService;
-import project.piuda.global.security.JwtAuthenticationFilter;
-import project.piuda.global.security.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
@@ -34,7 +31,7 @@ public class SecurityConfig {
                 // 최신 함수형 설정 문법 반영 (creationPolicy 에러 해결)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/users/login", "/api/v1/users/signup", "/api/v1/devices", "/api/v1/devices/*/voice").permitAll()
+                        .requestMatchers("/api/v1/users/login", "/api/v1/users/signup", "/api/v1/devices", "/api/v1/devices/*/voice", "api/v1/users/check-nickname").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
                 )
