@@ -21,7 +21,7 @@ public class S3UploadService {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
-            "image/jpeg", "image/png", "image/gif", "image/webp"
+            "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
     );
 
     private final AmazonS3 amazonS3Client;
