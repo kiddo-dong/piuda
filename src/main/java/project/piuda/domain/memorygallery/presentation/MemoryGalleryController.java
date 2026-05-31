@@ -23,8 +23,8 @@ public class MemoryGalleryController {
     public ResponseEntity<Void> uploadPhoto(
             @PathVariable Long patientId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam("image") MultipartFile image,
-            @RequestParam(value = "memo", required = false) String memo) throws IOException {
+            @RequestPart("image") MultipartFile image,
+            @RequestPart(value = "memo", required = false) String memo) throws IOException {
         memoryGalleryService.uploadPhoto(patientId, userDetails.getUsername(), image, memo);
         return ResponseEntity.ok().build();
     }
