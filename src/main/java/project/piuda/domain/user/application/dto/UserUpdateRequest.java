@@ -9,7 +9,6 @@ public class UserUpdateRequest {
     private String name;
     private String nickname;
     private String phone;
-    private String profileImageUrl;
     private String introduction;
     private String password;
 }

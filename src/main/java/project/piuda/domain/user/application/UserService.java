@@ -16,8 +16,10 @@ import project.piuda.domain.user.domain.*;
 import project.piuda.global.exception.BusinessException;
 import project.piuda.global.exception.ConflictException;
 import project.piuda.global.exception.NotFoundException;
+import project.piuda.global.infrastructure.S3UploadService;
 import project.piuda.global.security.JwtTokenProvider;
-
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,9 +32,10 @@ public class UserService {
     private final CaregiverProfileRepository caregiverProfileRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final S3UploadService s3UploadService;
 
     @Transactional
-    public void signUp(SignUpRequest request) {
+    public void signUp(SignUpRequest request, MultipartFile image) throws IOException {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new ConflictException("이미 존재하는 이메일입니다.");
         }
@@ -40,13 +43,16 @@ public class UserService {
             throw new ConflictException("이미 사용 중인 닉네임입니다.");
         }
 
+        String profileImageUrl = (image != null && !image.isEmpty())
+                ? s3UploadService.upload(image, "profiles") : null;
+
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .nickname(request.getNickname())
                 .phone(request.getPhone())
-                .profileImageUrl(request.getProfileImageUrl())
+                .profileImageUrl(profileImageUrl)
                 .introduction(request.getIntroduction())
                 .role(request.getRole())
                 .build();
@@ -84,7 +90,7 @@ public class UserService {
     }
 
     @Transactional
-    public void updateMe(String email, UserUpdateRequest request) {
+    public void updateMe(String email, UserUpdateRequest request, MultipartFile image) throws IOException {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
         if (request.getNickname() != null && !request.getNickname().isBlank()
@@ -92,10 +98,12 @@ public class UserService {
                 && userRepository.existsByNickname(request.getNickname())) {
             throw new ConflictException("이미 사용 중인 닉네임입니다.");
         }
+        String profileImageUrl = (image != null && !image.isEmpty())
+                ? s3UploadService.upload(image, "profiles") : user.getProfileImageUrl();
         String encodedPassword = request.getPassword() != null && !request.getPassword().isBlank()
                 ? passwordEncoder.encode(request.getPassword()) : null;
         user.update(request.getName(), request.getNickname(), request.getPhone(),
-                request.getProfileImageUrl(), request.getIntroduction(), encodedPassword);
+                profileImageUrl, request.getIntroduction(), encodedPassword);
     }
 
     @Transactional

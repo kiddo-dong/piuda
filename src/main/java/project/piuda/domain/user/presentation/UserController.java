@@ -6,9 +6,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.user.application.UserService;
 import project.piuda.domain.user.application.dto.*;
-
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -18,9 +19,11 @@ public class UserController {
 
     private final UserService service;
 
-    @PostMapping("/signup")
-    public ResponseEntity<Void> signUp(@Valid @RequestBody SignUpRequest request) {
-        service.signUp(request);
+    @PostMapping(value = "/signup", consumes = "multipart/form-data")
+    public ResponseEntity<Void> signUp(
+            @Valid @RequestPart("data") SignUpRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+        service.signUp(request, image);
         return ResponseEntity.ok().build();
     }
 
@@ -34,11 +37,12 @@ public class UserController {
         return ResponseEntity.ok(service.getMe(userDetails.getUsername()));
     }
 
-    @PutMapping("/me")
+    @PutMapping(value = "/me", consumes = "multipart/form-data")
     public ResponseEntity<Void> updateMe(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody UserUpdateRequest request) {
-        service.updateMe(userDetails.getUsername(), request);
+            @RequestPart("data") UserUpdateRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+        service.updateMe(userDetails.getUsername(), request, image);
         return ResponseEntity.ok().build();
     }
 

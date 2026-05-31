@@ -29,7 +29,6 @@ public class SignUpRequest {
     private String nickname;
 
     private String phone;
-    private String profileImageUrl;
     private String introduction;
 
     @NotNull(message = "역할을 선택해주세요.")
