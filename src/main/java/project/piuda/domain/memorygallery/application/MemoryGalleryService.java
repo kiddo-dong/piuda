@@ -41,15 +41,11 @@ public class MemoryGalleryService {
 
     @Transactional
     public void uploadPhoto(Long patientId, String userEmail, MultipartFile image, String memo) throws IOException {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-        User writer = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-
+        Patient patient = getPatient(patientId);
+        User writer = getUser(userEmail);
         validatePatientAccess(patient, writer);
 
         String imageUrl = s3UploadService.upload(image, "memory-gallery");
-
         memoryGalleryRepository.save(MemoryGallery.builder()
                 .patient(patient)
                 .writer(writer)
@@ -58,13 +54,10 @@ public class MemoryGalleryService {
                 .build());
     }
 
-    public List<MemoryGalleryItem> getGallery(Long patientId, String userEmail) {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+    public List<MemoryGalleryItem> getPhotoGallery(Long patientId, String userEmail) {
+        Patient patient = getPatient(patientId);
+        validatePatientAccess(patient, getUser(userEmail));
 
-        validatePatientAccess(patient, user);
         List<MemoryGalleryItem> items = new ArrayList<>();
 
         for (DailyLog log : dailyLogRepository.findByPatientIdAndImageUrlIsNotNullOrderByLogDateDesc(patientId)) {
@@ -76,11 +69,18 @@ public class MemoryGalleryService {
             items.add(MemoryGalleryItem.ofGalleryImage(gallery.getId(), gallery.getImageUrl(), gallery.getUploadedAt(), gallery.getWriter().getNickname()));
         }
 
-        for (VoiceRecord voice : voiceRecordRepository.findAllByPatientIdOrderByRecordedAtDesc(patientId)) {
-            items.add(MemoryGalleryItem.ofAudio(voice.getAudioUrl(), voice.getRecordedAt()));
-        }
-
         items.sort(Comparator.comparing(MemoryGalleryItem::getRecordedAt).reversed());
+        return items;
+    }
+
+    public List<MemoryGalleryItem> getAudioGallery(Long patientId, String userEmail) {
+        Patient patient = getPatient(patientId);
+        validatePatientAccess(patient, getUser(userEmail));
+
+        List<MemoryGalleryItem> items = new ArrayList<>();
+        for (VoiceRecord voice : voiceRecordRepository.findAllByPatientIdOrderByRecordedAtDesc(patientId)) {
+            items.add(MemoryGalleryItem.ofAudio(voice.getId(), voice.getAudioUrl(), voice.getRecordedAt()));
+        }
         return items;
     }
 
@@ -88,11 +88,26 @@ public class MemoryGalleryService {
     public void deletePhoto(Long galleryId, String userEmail) {
         MemoryGallery gallery = memoryGalleryRepository.findById(galleryId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 갤러리 항목입니다."));
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-
-        validatePatientAccess(gallery.getPatient(), user);
+        validatePatientAccess(gallery.getPatient(), getUser(userEmail));
         memoryGalleryRepository.delete(gallery);
+    }
+
+    @Transactional
+    public void deleteAudio(Long audioId, String userEmail) {
+        VoiceRecord voice = voiceRecordRepository.findById(audioId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 음성 기록입니다."));
+        validatePatientAccess(voice.getPatient(), getUser(userEmail));
+        voiceRecordRepository.delete(voice);
+    }
+
+    private Patient getPatient(Long patientId) {
+        return patientRepository.findById(patientId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+    }
+
+    private User getUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
     }
 
     private void validatePatientAccess(Patient patient, User user) {
