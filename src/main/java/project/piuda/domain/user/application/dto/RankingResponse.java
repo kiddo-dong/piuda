@@ -10,6 +10,7 @@ public class RankingResponse {
     private final String name;
     private final String role;
     private final int score;
+    private final String profileImageUrl;
 
     public RankingResponse(int rank, User user) {
         this.rank = rank;
@@ -17,5 +18,6 @@ public class RankingResponse {
         this.name = user.getName();
         this.role = user.getRole().name();
         this.score = user.getScore();
+        this.profileImageUrl = user.getProfileImageUrl();
     }
 }
