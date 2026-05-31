@@ -3,8 +3,11 @@ package project.piuda.domain.community.application.dto;
 import lombok.Getter;
 import project.piuda.domain.community.domain.Post;
 import project.piuda.domain.community.domain.PostCategory;
+import project.piuda.domain.community.domain.PostImage;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 public class PostResponse {
@@ -14,7 +17,7 @@ public class PostResponse {
     private final String title;
     private final String content;
     private final PostCategory category;
-    private final String imageUrl;
+    private final List<String> imageUrls;
     private final int likeCount;
     private final int viewCount;
     private final boolean likedByMe;
@@ -29,7 +32,9 @@ public class PostResponse {
         this.title = post.getTitle();
         this.content = post.getContent();
         this.category = post.getCategory();
-        this.imageUrl = post.getImageUrl();
+        this.imageUrls = post.getImages().stream()
+                .map(PostImage::getImageUrl)
+                .collect(Collectors.toList());
         this.likeCount = post.getLikeCount();
         this.viewCount = post.getViewCount();
         this.likedByMe = likedByMe;

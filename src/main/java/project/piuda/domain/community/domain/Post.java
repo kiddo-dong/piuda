@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import project.piuda.domain.user.domain.User;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "posts")
@@ -30,7 +32,8 @@ public class Post {
     @Column(nullable = false)
     private PostCategory category;
 
-    private String imageUrl;
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostImage> images = new ArrayList<>();
 
     @Column(nullable = false)
     private int likeCount;
@@ -47,12 +50,11 @@ public class Post {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Post(User writer, String title, String content, PostCategory category, String imageUrl) {
+    public Post(User writer, String title, String content, PostCategory category) {
         this.writer = writer;
         this.title = title;
         this.content = content;
         this.category = category;
-        this.imageUrl = imageUrl;
         this.likeCount = 0;
         this.viewCount = 0;
         this.hasAdopted = false;
@@ -67,11 +69,10 @@ public class Post {
         this.hasAdopted = false;
     }
 
-    public void update(String title, String content, PostCategory category, String imageUrl) {
+    public void update(String title, String content, PostCategory category) {
         this.title = title;
         this.content = content;
         this.category = category;
-        this.imageUrl = imageUrl;
         this.updatedAt = LocalDateTime.now();
     }
 

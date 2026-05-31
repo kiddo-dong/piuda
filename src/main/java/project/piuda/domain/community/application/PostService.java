@@ -6,15 +6,14 @@ import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.community.application.dto.PostRequest;
 import project.piuda.domain.community.application.dto.PostResponse;
 import project.piuda.domain.community.domain.*;
-import project.piuda.domain.community.domain.PostCategory;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.BusinessException;
 import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.S3UploadService;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,23 +22,29 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PostService {
 
+    private static final int MAX_IMAGE_COUNT = 8;
+
     private final PostRepository postRepository;
+    private final PostImageRepository postImageRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserRepository userRepository;
     private final S3UploadService s3UploadService;
 
     @Transactional
-    public Long createPost(String userEmail, PostRequest request, MultipartFile image) throws IOException {
+    public Long createPost(String userEmail, PostRequest request, List<MultipartFile> images) throws IOException {
         User writer = getUser(userEmail);
-        String imageUrl = (image != null && !image.isEmpty()) ? s3UploadService.upload(image, "posts") : null;
+        validateImageCount(images);
+
         Post post = Post.builder()
                 .writer(writer)
                 .title(request.getTitle())
                 .content(request.getContent())
                 .category(request.getCategory())
-                .imageUrl(imageUrl)
                 .build();
-        return postRepository.save(post).getId();
+        postRepository.save(post);
+
+        uploadAndSaveImages(images, post);
+        return post.getId();
     }
 
     public List<PostResponse> getPosts(String userEmail, PostCategory category, String keyword) {
@@ -58,12 +63,18 @@ public class PostService {
     }
 
     @Transactional
-    public void updatePost(Long postId, String userEmail, PostRequest request, MultipartFile image) throws IOException {
+    public void updatePost(Long postId, String userEmail, PostRequest request, List<MultipartFile> images) throws IOException {
         User user = getUser(userEmail);
         Post post = getPostOrThrow(postId);
         validateOwner(post.getWriter().getId(), user.getId());
-        String imageUrl = (image != null && !image.isEmpty()) ? s3UploadService.upload(image, "posts") : post.getImageUrl();
-        post.update(request.getTitle(), request.getContent(), request.getCategory(), imageUrl);
+        validateImageCount(images);
+
+        post.update(request.getTitle(), request.getContent(), request.getCategory());
+
+        if (images != null && !images.isEmpty()) {
+            postImageRepository.deleteAllByPost(post);
+            uploadAndSaveImages(images, post);
+        }
     }
 
     @Transactional
@@ -90,6 +101,22 @@ public class PostService {
                     post.increaseLike();
                     return true;
                 });
+    }
+
+    private void uploadAndSaveImages(List<MultipartFile> images, Post post) throws IOException {
+        if (images == null || images.isEmpty()) return;
+        for (MultipartFile image : images) {
+            if (image != null && !image.isEmpty()) {
+                String imageUrl = s3UploadService.upload(image, "posts");
+                postImageRepository.save(PostImage.builder().post(post).imageUrl(imageUrl).build());
+            }
+        }
+    }
+
+    private void validateImageCount(List<MultipartFile> images) {
+        if (images != null && images.size() > MAX_IMAGE_COUNT) {
+            throw new BusinessException("이미지는 최대 " + MAX_IMAGE_COUNT + "장까지 업로드할 수 있습니다.");
+        }
     }
 
     private User getUser(String email) {
