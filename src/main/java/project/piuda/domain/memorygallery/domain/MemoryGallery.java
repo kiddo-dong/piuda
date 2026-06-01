@@ -26,9 +26,10 @@ public class MemoryGallery {
     @JoinColumn(name = "writer_id", nullable = false)
     private User writer;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 512)
     private String imageUrl;
 
+    @Column(columnDefinition = "TEXT")
     private String memo;
 
     @Column(nullable = false)

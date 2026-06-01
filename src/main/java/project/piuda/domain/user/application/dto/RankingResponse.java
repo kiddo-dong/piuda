@@ -16,7 +16,7 @@ public class RankingResponse {
         this.rank = rank;
         this.userId = user.getId();
         this.name = user.getName();
-        this.role = user.getRole().name();
+        this.role = user.getRole() != null ? user.getRole().name() : null;
         this.score = user.getScore();
         this.profileImageUrl = user.getProfileImageUrl();
     }

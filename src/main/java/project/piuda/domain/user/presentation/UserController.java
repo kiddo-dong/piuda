@@ -52,6 +52,13 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/onboarding")
+    public ResponseEntity<TokenResponse> completeOnboarding(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody OnboardingRequest request) {
+        return ResponseEntity.ok(service.completeOnboarding(userDetails.getUsername(), request));
+    }
+
     @GetMapping("/check-nickname")
     public ResponseEntity<Boolean> checkNickname(@RequestParam String nickname) {
         return ResponseEntity.ok(service.checkNickname(nickname));

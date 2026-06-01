@@ -16,11 +16,15 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
+    public User getUser() { return user; }
     public Long getId() { return user.getId(); }
     public String getName() { return user.getName(); }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (user.getRole() == null) {
+            return Collections.singletonList(new SimpleGrantedAuthority("ROLE_PENDING"));
+        }
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
 

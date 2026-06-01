@@ -7,6 +7,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.user.application.dto.LoginRequest;
+import project.piuda.domain.user.application.dto.OnboardingRequest;
 import project.piuda.domain.user.application.dto.RankingResponse;
 import project.piuda.domain.user.application.dto.SignUpRequest;
 import project.piuda.domain.user.application.dto.TokenResponse;
@@ -71,10 +72,32 @@ public class UserService {
         return !userRepository.existsByNickname(nickname);
     }
 
+    @Transactional
+    public TokenResponse completeOnboarding(String email, OnboardingRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        if (userRepository.existsByNickname(request.getNickname())) {
+            throw new ConflictException("이미 사용 중인 닉네임입니다.");
+        }
+        user.completeOnboarding(request.getNickname(), request.getRole(), request.getPhone());
+        if (request.getRole() == Role.CAREGIVER) {
+            CaregiverProfile profile = CaregiverProfile.builder()
+                    .user(user)
+                    .experienceYears(request.getExperienceYears() != null ? request.getExperienceYears() : 0)
+                    .build();
+            caregiverProfileRepository.save(profile);
+        }
+        String token = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
+        return new TokenResponse(token);
+    }
+
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BusinessException("이메일 또는 비밀번호가 일치하지 않습니다."));
 
+        if (user.getPassword() == null) {
+            throw new BusinessException("소셜 로그인 계정입니다. 소셜 로그인을 이용해 주세요.");
+        }
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BusinessException("이메일 또는 비밀번호가 일치하지 않습니다.");
         }

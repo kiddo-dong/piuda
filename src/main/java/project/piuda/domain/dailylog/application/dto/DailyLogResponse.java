@@ -40,7 +40,7 @@ public class DailyLogResponse {
         this.id = log.getId();
         this.patientId = log.getPatient().getId();
         this.writerName = log.getWriter().getName();
-        this.writerRole = log.getWriter().getRole().name(); // CAREGIVER, PROTECTOR 등
+        this.writerRole = log.getWriter().getRole() != null ? log.getWriter().getRole().name() : null;
         this.logDate = log.getLogDate();
         this.startTime = log.getStartTime();
         this.endTime = log.getEndTime();

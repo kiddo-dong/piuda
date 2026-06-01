@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.careadvice.application.dto.*;
 import project.piuda.domain.careadvice.domain.*;
 import project.piuda.domain.patient.domain.Patient;
+import project.piuda.domain.patient.domain.PatientMemberRepository;
 import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.domain.patientmemory.domain.PatientMemoryRepository;
 import project.piuda.domain.user.domain.User;
@@ -30,6 +31,7 @@ public class CareAdviceService {
     private final CareAdviceMessageRepository messageRepository;
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
+    private final PatientMemberRepository patientMemberRepository;
     private final PatientMemoryRepository patientMemoryRepository;
     private final OpenAiChatClient openAiChatClient;
 
@@ -39,6 +41,10 @@ public class CareAdviceService {
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+
+        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
+            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
+        }
 
         return new CareAdviceSessionResponse(sessionRepository.save(
                 CareAdviceSession.builder().user(user).patient(patient).build()
@@ -102,6 +108,12 @@ public class CareAdviceService {
     public List<CareAdviceSessionResponse> getSessions(Long patientId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+
+        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
+            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
+        }
 
         return sessionRepository.findByUserIdAndPatientIdOrderByCreatedAtDesc(user.getId(), patientId)
                 .stream()

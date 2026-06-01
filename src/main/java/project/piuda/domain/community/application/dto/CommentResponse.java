@@ -19,7 +19,7 @@ public class CommentResponse {
     public CommentResponse(Comment comment, List<CommentResponse> replies) {
         this.commentId = comment.getId();
         this.writerNickname = comment.getWriter().getNickname();
-        this.writerRole = comment.getWriter().getRole().name();
+        this.writerRole = comment.getWriter().getRole() != null ? comment.getWriter().getRole().name() : null;
         this.content = comment.getContent();
         this.adopted = comment.isAdopted();
         this.createdAt = comment.getCreatedAt();

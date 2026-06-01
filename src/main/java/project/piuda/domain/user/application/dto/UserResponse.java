@@ -23,7 +23,7 @@ public class UserResponse {
         this.phone = user.getPhone();
         this.profileImageUrl = user.getProfileImageUrl();
         this.introduction = user.getIntroduction();
-        this.role = user.getRole().name();
+        this.role = user.getRole() != null ? user.getRole().name() : null;
         this.score = user.getScore();
     }
 }

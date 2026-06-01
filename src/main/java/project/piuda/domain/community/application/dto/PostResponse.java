@@ -28,7 +28,7 @@ public class PostResponse {
     public PostResponse(Post post, boolean likedByMe) {
         this.postId = post.getId();
         this.writerNickname = post.getWriter().getNickname();
-        this.writerRole = post.getWriter().getRole().name();
+        this.writerRole = post.getWriter().getRole() != null ? post.getWriter().getRole().name() : null;
         this.title = post.getTitle();
         this.content = post.getContent();
         this.category = post.getCategory();
