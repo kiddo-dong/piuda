@@ -17,6 +17,7 @@ import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,14 +57,20 @@ public class CommentService {
     }
 
     public List<CommentResponse> getComments(Long postId) {
-        return commentRepository.findByPostIdAndParentCommentIsNullOrderByCreatedAtAsc(postId).stream()
-                .map(comment -> {
-                    List<CommentResponse> replies = commentRepository
-                            .findByParentCommentIdOrderByCreatedAtAsc(comment.getId()).stream()
-                            .map(reply -> new CommentResponse(reply, List.of()))
-                            .collect(Collectors.toList());
-                    return new CommentResponse(comment, replies);
-                })
+        List<Comment> parentComments = commentRepository
+                .findByPostIdAndParentCommentIsNullOrderByCreatedAtAsc(postId);
+
+        List<Long> parentIds = parentComments.stream()
+                .map(Comment::getId)
+                .collect(Collectors.toList());
+
+        Map<Long, List<CommentResponse>> repliesMap = commentRepository
+                .findByParentCommentIdInOrderByCreatedAtAsc(parentIds).stream()
+                .map(reply -> new CommentResponse(reply, List.of()))
+                .collect(Collectors.groupingBy(CommentResponse::getParentCommentId));
+
+        return parentComments.stream()
+                .map(comment -> new CommentResponse(comment, repliesMap.getOrDefault(comment.getId(), List.of())))
                 .collect(Collectors.toList());
     }
 

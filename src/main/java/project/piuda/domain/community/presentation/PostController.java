@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.community.application.PostService;
+import project.piuda.domain.community.application.dto.PostPageResponse;
 import project.piuda.domain.community.application.dto.PostRequest;
 import project.piuda.domain.community.application.dto.PostResponse;
 import project.piuda.domain.community.domain.PostCategory;
@@ -33,11 +34,13 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PostResponse>> getPosts(
+    public ResponseEntity<PostPageResponse> getPosts(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) PostCategory category,
-            @RequestParam(required = false) String keyword) {
-        return ResponseEntity.ok(postService.getPosts(userDetails.getUsername(), category, keyword));
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(postService.getPosts(userDetails.getUsername(), category, keyword, cursor, size));
     }
 
     @GetMapping("/{postId}")

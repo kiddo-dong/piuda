@@ -3,6 +3,7 @@ package project.piuda.domain.community.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.piuda.domain.community.application.dto.PostPageResponse;
 import project.piuda.domain.community.application.dto.PostRequest;
 import project.piuda.domain.community.application.dto.PostResponse;
 import project.piuda.domain.community.domain.*;
@@ -14,7 +15,9 @@ import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.S3UploadService;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import org.springframework.data.domain.PageRequest;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,11 +50,23 @@ public class PostService {
         return post.getId();
     }
 
-    public List<PostResponse> getPosts(String userEmail, PostCategory category, String keyword) {
+    public PostPageResponse getPosts(String userEmail, PostCategory category, String keyword, Long cursor, int size) {
         User user = getUser(userEmail);
-        return postRepository.searchPosts(category, keyword).stream()
-                .map(post -> new PostResponse(post, postLikeRepository.existsByPostIdAndUserId(post.getId(), user.getId())))
+        List<Post> posts = postRepository.searchPosts(category, keyword, cursor, PageRequest.of(0, size + 1));
+
+        boolean hasNext = posts.size() > size;
+        List<Post> content = hasNext ? posts.subList(0, size) : posts;
+
+        List<Long> postIds = content.stream().map(Post::getId).collect(Collectors.toList());
+        Set<Long> likedPostIds = postIds.isEmpty()
+                ? Set.of()
+                : postLikeRepository.findLikedPostIds(postIds, user.getId());
+
+        List<PostResponse> responses = content.stream()
+                .map(post -> new PostResponse(post, likedPostIds.contains(post.getId())))
                 .collect(Collectors.toList());
+
+        return new PostPageResponse(responses, hasNext);
     }
 
     @Transactional
