@@ -1,0 +1,34 @@
+package project.piuda.global.infrastructure;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import project.piuda.global.exception.BusinessException;
+
+import java.util.Map;
+
+@Component
+public class GoogleAuthClient {
+
+    private final RestClient restClient = RestClient.create();
+
+    @SuppressWarnings("unchecked")
+    public SocialUserInfo verify(String idToken) {
+        try {
+            Map<String, Object> response = restClient.get()
+                    .uri("https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken)
+                    .retrieve()
+                    .body(Map.class);
+
+            if (response == null) throw new BusinessException("Google 토큰 검증에 실패했습니다.");
+
+            return new SocialUserInfo(
+                    (String) response.get("sub"),
+                    (String) response.get("name"),
+                    (String) response.get("email"),
+                    (String) response.get("picture")
+            );
+        } catch (Exception e) {
+            throw new BusinessException("유효하지 않은 Google ID Token입니다.");
+        }
+    }
+}
