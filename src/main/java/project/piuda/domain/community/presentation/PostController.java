@@ -43,14 +43,16 @@ public class PostController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "LATEST") SortType sortType) {
-        return ResponseEntity.ok(postService.getPosts(userDetails.getUsername(), category, keyword, cursor, page, size, sortType));
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(postService.getPosts(email, category, keyword, cursor, page, size, sortType));
     }
 
     @GetMapping("/{postId}")
     public ResponseEntity<PostResponse> getPost(
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(postService.getPost(postId, userDetails.getUsername()));
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(postService.getPost(postId, email));
     }
 
     @PutMapping(value = "/{postId}", consumes = "multipart/form-data")

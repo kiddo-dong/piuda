@@ -53,8 +53,6 @@ public class PostService {
 
     public PostPageResponse getPosts(String userEmail, PostCategory category, String keyword,
                                      Long cursor, int page, int size, SortType sortType) {
-        User user = getUser(userEmail);
-
         List<Post> posts;
         if (sortType == SortType.VIEWS) {
             posts = postRepository.searchPostsByViews(category, keyword, PageRequest.of(page, size + 1));
@@ -68,9 +66,9 @@ public class PostService {
         List<Post> content = hasNext ? posts.subList(0, size) : posts;
 
         List<Long> postIds = content.stream().map(Post::getId).collect(Collectors.toList());
-        Set<Long> likedPostIds = postIds.isEmpty()
+        Set<Long> likedPostIds = (userEmail == null || postIds.isEmpty())
                 ? Set.of()
-                : postLikeRepository.findLikedPostIds(postIds, user.getId());
+                : postLikeRepository.findLikedPostIds(postIds, getUser(userEmail).getId());
 
         List<PostResponse> responses = content.stream()
                 .map(post -> new PostResponse(post, likedPostIds.contains(post.getId())))
@@ -84,10 +82,11 @@ public class PostService {
 
     @Transactional
     public PostResponse getPost(Long postId, String userEmail) {
-        User user = getUser(userEmail);
         Post post = getPostOrThrow(postId);
         post.increaseViewCount();
-        return new PostResponse(post, postLikeRepository.existsByPostIdAndUserId(postId, user.getId()));
+        boolean likedByMe = userEmail != null &&
+                postLikeRepository.existsByPostIdAndUserId(postId, getUser(userEmail).getId());
+        return new PostResponse(post, likedByMe);
     }
 
     @Transactional

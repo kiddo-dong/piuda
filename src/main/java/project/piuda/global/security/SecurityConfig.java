@@ -13,6 +13,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 import java.util.List;
 
 @Configuration
@@ -51,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/users/login", "/api/v1/users/signup", "/api/v1/devices", "/api/v1/devices/*/voice", "/api/v1/users/check-nickname").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/*", "/api/v1/posts/*/comments").permitAll()
                         .requestMatchers("/api/v1/users/onboarding").hasRole("PENDING")
                         .anyRequest().hasAnyRole("PROTECTOR", "CAREGIVER", "MEDICAL_STAFF")
                 )
