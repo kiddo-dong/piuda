@@ -45,8 +45,9 @@ public class DailyLogService {
 
         validatePatientAccess(patient, writer);
 
-        if (writer.getRole() != Role.CAREGIVER && request.getEmotionalCommunicationMinutes() > 0) {
-            throw new ForbiddenException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
+        if (writer.getRole() != Role.CAREGIVER && writer.getRole() != Role.MEDICAL_STAFF
+                && request.getEmotionalCommunicationMinutes() > 0) {
+            throw new ForbiddenException("정서 지원 항목은 간병인 또는 의료진 권한만 기입할 수 있습니다.");
         }
 
         String imageUrl = (image != null && !image.isEmpty()) ? s3UploadService.upload(image, "daily-log") : null;
@@ -121,8 +122,9 @@ public class DailyLogService {
         validatePatientAccess(log.getPatient(), writer);
         validateWriter(log, writer);
 
-        if (writer.getRole() != Role.CAREGIVER && request.getEmotionalCommunicationMinutes() > 0) {
-            throw new ForbiddenException("정서 지원 항목은 간병인 권한만 기입할 수 있습니다.");
+        if (writer.getRole() != Role.CAREGIVER && writer.getRole() != Role.MEDICAL_STAFF
+                && request.getEmotionalCommunicationMinutes() > 0) {
+            throw new ForbiddenException("정서 지원 항목은 간병인 또는 의료진 권한만 기입할 수 있습니다.");
         }
 
         String imageUrl = (image != null && !image.isEmpty()) ? s3UploadService.upload(image, "daily-log") : log.getImageUrl();

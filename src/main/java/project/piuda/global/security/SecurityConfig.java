@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/users/onboarding").hasRole("PENDING")
-                        .anyRequest().hasAnyRole("PROTECTOR", "CAREGIVER", "FAMILY")
+                        .anyRequest().hasAnyRole("PROTECTOR", "CAREGIVER", "MEDICAL_STAFF")
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
                         UsernamePasswordAuthenticationFilter.class);
