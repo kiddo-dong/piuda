@@ -12,8 +12,22 @@ public interface PostRepository extends JpaRepository<Post, Long> {
            "AND (:keyword IS NULL OR p.title LIKE %:keyword% OR p.content LIKE %:keyword%) " +
            "AND (:cursor IS NULL OR p.id < :cursor) " +
            "ORDER BY p.id DESC")
-    List<Post> searchPosts(@Param("category") PostCategory category,
-                           @Param("keyword") String keyword,
-                           @Param("cursor") Long cursor,
-                           org.springframework.data.domain.Pageable pageable);
+    List<Post> searchPostsLatest(@Param("category") PostCategory category,
+                                 @Param("keyword") String keyword,
+                                 @Param("cursor") Long cursor,
+                                 org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE (:category IS NULL OR p.category = :category) " +
+           "AND (:keyword IS NULL OR p.title LIKE %:keyword% OR p.content LIKE %:keyword%) " +
+           "ORDER BY p.viewCount DESC, p.id DESC")
+    List<Post> searchPostsByViews(@Param("category") PostCategory category,
+                                  @Param("keyword") String keyword,
+                                  org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE (:category IS NULL OR p.category = :category) " +
+           "AND (:keyword IS NULL OR p.title LIKE %:keyword% OR p.content LIKE %:keyword%) " +
+           "ORDER BY p.likeCount DESC, p.id DESC")
+    List<Post> searchPostsByLikes(@Param("category") PostCategory category,
+                                  @Param("keyword") String keyword,
+                                  org.springframework.data.domain.Pageable pageable);
 }

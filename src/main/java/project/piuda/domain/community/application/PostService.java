@@ -7,6 +7,7 @@ import project.piuda.domain.community.application.dto.PostPageResponse;
 import project.piuda.domain.community.application.dto.PostRequest;
 import project.piuda.domain.community.application.dto.PostResponse;
 import project.piuda.domain.community.domain.*;
+import project.piuda.domain.community.domain.SortType;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
 import project.piuda.global.exception.BusinessException;
@@ -50,9 +51,18 @@ public class PostService {
         return post.getId();
     }
 
-    public PostPageResponse getPosts(String userEmail, PostCategory category, String keyword, Long cursor, int size) {
+    public PostPageResponse getPosts(String userEmail, PostCategory category, String keyword,
+                                     Long cursor, int page, int size, SortType sortType) {
         User user = getUser(userEmail);
-        List<Post> posts = postRepository.searchPosts(category, keyword, cursor, PageRequest.of(0, size + 1));
+
+        List<Post> posts;
+        if (sortType == SortType.VIEWS) {
+            posts = postRepository.searchPostsByViews(category, keyword, PageRequest.of(page, size + 1));
+        } else if (sortType == SortType.LIKES) {
+            posts = postRepository.searchPostsByLikes(category, keyword, PageRequest.of(page, size + 1));
+        } else {
+            posts = postRepository.searchPostsLatest(category, keyword, cursor, PageRequest.of(0, size + 1));
+        }
 
         boolean hasNext = posts.size() > size;
         List<Post> content = hasNext ? posts.subList(0, size) : posts;
@@ -66,7 +76,10 @@ public class PostService {
                 .map(post -> new PostResponse(post, likedPostIds.contains(post.getId())))
                 .collect(Collectors.toList());
 
-        return new PostPageResponse(responses, hasNext);
+        if (sortType == SortType.LATEST) {
+            return new PostPageResponse(responses, hasNext);
+        }
+        return new PostPageResponse(responses, hasNext, page);
     }
 
     @Transactional

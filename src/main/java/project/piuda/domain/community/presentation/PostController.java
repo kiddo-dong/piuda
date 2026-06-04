@@ -12,6 +12,7 @@ import project.piuda.domain.community.application.dto.PostPageResponse;
 import project.piuda.domain.community.application.dto.PostRequest;
 import project.piuda.domain.community.application.dto.PostResponse;
 import project.piuda.domain.community.domain.PostCategory;
+import project.piuda.domain.community.domain.SortType;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,8 +40,10 @@ public class PostController {
             @RequestParam(required = false) PostCategory category,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(postService.getPosts(userDetails.getUsername(), category, keyword, cursor, size));
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LATEST") SortType sortType) {
+        return ResponseEntity.ok(postService.getPosts(userDetails.getUsername(), category, keyword, cursor, page, size, sortType));
     }
 
     @GetMapping("/{postId}")
