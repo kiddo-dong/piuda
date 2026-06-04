@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import project.piuda.domain.patient.domain.DementiaStage;
 import project.piuda.domain.patient.domain.Gender;
 
 import java.time.LocalDate;
@@ -21,8 +22,8 @@ public class PatientCreateRequest {
     @NotNull(message = "성별을 선택해주세요.")
     private Gender gender;
 
-    @NotBlank(message = "치매 단계를 입력해주세요.")
-    private String dementiaStage;
+    @NotNull(message = "치매 단계를 선택해주세요.")
+    private DementiaStage dementiaStage;
 
     private String relationship;
 }

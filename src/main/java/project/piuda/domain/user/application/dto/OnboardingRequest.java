@@ -3,7 +3,10 @@ package project.piuda.domain.user.application.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import project.piuda.domain.user.domain.Gender;
 import project.piuda.domain.user.domain.Role;
+
+import java.time.LocalDate;
 
 @Getter
 public class OnboardingRequest {
@@ -17,4 +20,6 @@ public class OnboardingRequest {
     private String phone;
 
     private Integer experienceYears;
+    private Gender gender;
+    private LocalDate birthDate;
 }

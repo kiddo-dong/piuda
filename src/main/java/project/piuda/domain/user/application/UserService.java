@@ -63,6 +63,8 @@ public class UserService {
             CaregiverProfile profile = CaregiverProfile.builder()
                     .user(user)
                     .experienceYears(request.getExperienceYears() != null ? request.getExperienceYears() : 0)
+                    .gender(request.getGender())
+                    .birthDate(request.getBirthDate())
                     .build();
             caregiverProfileRepository.save(profile);
         }
@@ -84,6 +86,8 @@ public class UserService {
             CaregiverProfile profile = CaregiverProfile.builder()
                     .user(user)
                     .experienceYears(request.getExperienceYears() != null ? request.getExperienceYears() : 0)
+                    .gender(request.getGender())
+                    .birthDate(request.getBirthDate())
                     .build();
             caregiverProfileRepository.save(profile);
         }

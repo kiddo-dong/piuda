@@ -27,7 +27,8 @@ public class Patient {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    private String dementiaStage;
+    @Enumerated(EnumType.STRING)
+    private DementiaStage dementiaStage;
 
     @Column(unique = true, length = 8)
     private String inviteCode;
@@ -40,7 +41,7 @@ public class Patient {
     private LocalDateTime createdAt;
 
     @Builder
-    public Patient(String name, LocalDate birthDate, Gender gender, String dementiaStage) {
+    public Patient(String name, LocalDate birthDate, Gender gender, DementiaStage dementiaStage) {
         this.name = name;
         this.birthDate = birthDate;
         this.gender = gender;
@@ -68,10 +69,10 @@ public class Patient {
         this.device = null;
     }
 
-    public void update(String name, LocalDate birthDate, Gender gender, String dementiaStage) {
+    public void update(String name, LocalDate birthDate, Gender gender, DementiaStage dementiaStage) {
         if (name != null && !name.isBlank()) this.name = name;
         if (birthDate != null) this.birthDate = birthDate;
         if (gender != null) this.gender = gender;
-        if (dementiaStage != null && !dementiaStage.isBlank()) this.dementiaStage = dementiaStage;
+        if (dementiaStage != null) this.dementiaStage = dementiaStage;
     }
 }

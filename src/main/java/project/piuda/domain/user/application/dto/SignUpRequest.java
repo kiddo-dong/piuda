@@ -3,7 +3,10 @@ package project.piuda.domain.user.application.dto;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import project.piuda.domain.user.domain.Gender;
 import project.piuda.domain.user.domain.Role;
+
+import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
@@ -35,6 +38,8 @@ public class SignUpRequest {
     private Role role;
 
     private Integer experienceYears;
+    private Gender gender;
+    private LocalDate birthDate;
 
     @AssertTrue(message = "비밀번호가 일치하지 않습니다.")
     public boolean isPasswordMatching() {
