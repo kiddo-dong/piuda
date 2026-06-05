@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import project.piuda.domain.user.domain.User;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "post_scraps", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"post_id", "user_id"})
@@ -25,9 +27,13 @@ public class PostScrap {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(nullable = false)
+    private LocalDateTime scrappedAt;
+
     @Builder
     public PostScrap(Post post, User user) {
         this.post = post;
         this.user = user;
+        this.scrappedAt = LocalDateTime.now();
     }
 }

@@ -3,21 +3,18 @@ package project.piuda.domain.community.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import project.piuda.domain.community.application.dto.PostPageResponse;
-import project.piuda.domain.community.application.dto.PostRequest;
-import project.piuda.domain.community.application.dto.PostResponse;
-import project.piuda.domain.community.domain.*;
-import project.piuda.domain.community.domain.SortType;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.web.multipart.MultipartFile;
+import project.piuda.domain.community.application.dto.*;
+import project.piuda.domain.community.domain.*;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
 import project.piuda.global.exception.BusinessException;
 import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.S3UploadService;
-import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
-import org.springframework.data.domain.PageRequest;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -150,29 +147,29 @@ public class PostService {
         postScrapRepository.delete(scrap);
     }
 
-    public PostPageResponse getScrappedPosts(String userEmail, PostCategory category, SortType sortType, int page, int size) {
+    public ScrappedPostPageResponse getScrappedPosts(String userEmail, PostCategory category, SortType sortType, int page, int size) {
         User user = getUser(userEmail);
         PageRequest pageRequest = PageRequest.of(page, size + 1);
-        List<Post> posts;
+        List<PostScrap> scraps;
         if (sortType == SortType.VIEWS) {
-            posts = postScrapRepository.findScrappedPostsByUserIdOrderByViews(user.getId(), category, pageRequest);
+            scraps = postScrapRepository.findScrappedPostsByUserIdOrderByViews(user.getId(), category, pageRequest);
         } else if (sortType == SortType.LIKES) {
-            posts = postScrapRepository.findScrappedPostsByUserIdOrderByLikes(user.getId(), category, pageRequest);
+            scraps = postScrapRepository.findScrappedPostsByUserIdOrderByLikes(user.getId(), category, pageRequest);
         } else {
-            posts = postScrapRepository.findScrappedPostsByUserIdOrderByLatest(user.getId(), category, pageRequest);
+            scraps = postScrapRepository.findScrappedPostsByUserIdOrderByLatest(user.getId(), category, pageRequest);
         }
 
-        boolean hasNext = posts.size() > size;
-        List<Post> content = hasNext ? posts.subList(0, size) : posts;
+        boolean hasNext = scraps.size() > size;
+        List<PostScrap> content = hasNext ? scraps.subList(0, size) : scraps;
 
-        List<Long> postIds = content.stream().map(Post::getId).collect(Collectors.toList());
+        List<Long> postIds = content.stream().map(s -> s.getPost().getId()).collect(Collectors.toList());
         Set<Long> likedPostIds = postIds.isEmpty() ? Set.of() : postLikeRepository.findLikedPostIds(postIds, user.getId());
 
-        List<PostResponse> responses = content.stream()
-                .map(post -> new PostResponse(post, likedPostIds.contains(post.getId()), true))
+        List<ScrappedPostResponse> responses = content.stream()
+                .map(scrap -> new ScrappedPostResponse(scrap.getPost(), likedPostIds.contains(scrap.getPost().getId()), scrap.getScrappedAt()))
                 .collect(Collectors.toList());
 
-        return new PostPageResponse(responses, hasNext, page);
+        return new ScrappedPostPageResponse(responses, hasNext, page);
     }
 
     @Transactional

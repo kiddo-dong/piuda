@@ -8,9 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.community.application.PostService;
-import project.piuda.domain.community.application.dto.PostPageResponse;
-import project.piuda.domain.community.application.dto.PostRequest;
-import project.piuda.domain.community.application.dto.PostResponse;
+import project.piuda.domain.community.application.dto.*;
 import project.piuda.domain.community.domain.PostCategory;
 import project.piuda.domain.community.domain.SortType;
 
@@ -98,7 +96,7 @@ public class PostController {
     }
 
     @GetMapping("/scraps")
-    public ResponseEntity<PostPageResponse> getScrappedPosts(
+    public ResponseEntity<ScrappedPostPageResponse> getScrappedPosts(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) PostCategory category,
             @RequestParam(defaultValue = "LATEST") SortType sortType,
