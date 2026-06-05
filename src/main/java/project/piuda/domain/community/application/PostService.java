@@ -142,6 +142,14 @@ public class PostService {
                 });
     }
 
+    @Transactional
+    public void deleteScrap(Long postId, String userEmail) {
+        User user = getUser(userEmail);
+        PostScrap scrap = postScrapRepository.findByPostIdAndUserId(postId, user.getId())
+                .orElseThrow(() -> new NotFoundException("스크랩하지 않은 게시글입니다."));
+        postScrapRepository.delete(scrap);
+    }
+
     public PostPageResponse getScrappedPosts(String userEmail, PostCategory category, SortType sortType, int page, int size) {
         User user = getUser(userEmail);
         PageRequest pageRequest = PageRequest.of(page, size + 1);

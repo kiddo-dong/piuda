@@ -81,6 +81,14 @@ public class PostController {
         return ResponseEntity.ok(Map.of("liked", liked));
     }
 
+    @DeleteMapping("/{postId}/scraps")
+    public ResponseEntity<Void> deleteScrap(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        postService.deleteScrap(postId, userDetails.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/{postId}/scraps")
     public ResponseEntity<Map<String, Boolean>> toggleScrap(
             @PathVariable Long postId,
