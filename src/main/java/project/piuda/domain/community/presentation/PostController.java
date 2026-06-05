@@ -80,4 +80,20 @@ public class PostController {
         boolean liked = postService.toggleLike(postId, userDetails.getUsername());
         return ResponseEntity.ok(Map.of("liked", liked));
     }
+
+    @PostMapping("/{postId}/scraps")
+    public ResponseEntity<Map<String, Boolean>> toggleScrap(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        boolean scrapped = postService.toggleScrap(postId, userDetails.getUsername());
+        return ResponseEntity.ok(Map.of("scrapped", scrapped));
+    }
+
+    @GetMapping("/scraps")
+    public ResponseEntity<PostPageResponse> getScrappedPosts(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(postService.getScrappedPosts(userDetails.getUsername(), page, size));
+    }
 }

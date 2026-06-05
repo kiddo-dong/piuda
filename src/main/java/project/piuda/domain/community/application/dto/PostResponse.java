@@ -21,11 +21,12 @@ public class PostResponse {
     private final int likeCount;
     private final int viewCount;
     private final boolean likedByMe;
+    private final boolean scrappedByMe;
     private final boolean hasAdopted;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    public PostResponse(Post post, boolean likedByMe) {
+    public PostResponse(Post post, boolean likedByMe, boolean scrappedByMe) {
         this.postId = post.getId();
         this.writerNickname = post.getWriter().getNickname();
         this.writerRole = post.getWriter().getRole() != null ? post.getWriter().getRole().name() : null;
@@ -38,6 +39,7 @@ public class PostResponse {
         this.likeCount = post.getLikeCount();
         this.viewCount = post.getViewCount();
         this.likedByMe = likedByMe;
+        this.scrappedByMe = scrappedByMe;
         this.hasAdopted = post.isHasAdopted();
         this.createdAt = post.getCreatedAt();
         this.updatedAt = post.getUpdatedAt();

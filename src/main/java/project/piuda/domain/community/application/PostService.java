@@ -8,6 +8,7 @@ import project.piuda.domain.community.application.dto.PostRequest;
 import project.piuda.domain.community.application.dto.PostResponse;
 import project.piuda.domain.community.domain.*;
 import project.piuda.domain.community.domain.SortType;
+import org.springframework.data.domain.PageRequest;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
 import project.piuda.global.exception.BusinessException;
@@ -31,6 +32,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
     private final PostLikeRepository postLikeRepository;
+    private final PostScrapRepository postScrapRepository;
     private final UserRepository userRepository;
     private final S3UploadService s3UploadService;
 
@@ -66,12 +68,19 @@ public class PostService {
         List<Post> content = hasNext ? posts.subList(0, size) : posts;
 
         List<Long> postIds = content.stream().map(Post::getId).collect(Collectors.toList());
-        Set<Long> likedPostIds = (userEmail == null || postIds.isEmpty())
-                ? Set.of()
-                : postLikeRepository.findLikedPostIds(postIds, getUser(userEmail).getId());
+        Set<Long> likedPostIds;
+        Set<Long> scrappedPostIds;
+        if (userEmail == null || postIds.isEmpty()) {
+            likedPostIds = Set.of();
+            scrappedPostIds = Set.of();
+        } else {
+            Long userId = getUser(userEmail).getId();
+            likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId);
+            scrappedPostIds = postScrapRepository.findScrappedPostIds(postIds, userId);
+        }
 
         List<PostResponse> responses = content.stream()
-                .map(post -> new PostResponse(post, likedPostIds.contains(post.getId())))
+                .map(post -> new PostResponse(post, likedPostIds.contains(post.getId()), scrappedPostIds.contains(post.getId())))
                 .collect(Collectors.toList());
 
         if (sortType == SortType.LATEST) {
@@ -84,9 +93,14 @@ public class PostService {
     public PostResponse getPost(Long postId, String userEmail) {
         Post post = getPostOrThrow(postId);
         post.increaseViewCount();
-        boolean likedByMe = userEmail != null &&
-                postLikeRepository.existsByPostIdAndUserId(postId, getUser(userEmail).getId());
-        return new PostResponse(post, likedByMe);
+        boolean likedByMe = false;
+        boolean scrappedByMe = false;
+        if (userEmail != null) {
+            Long userId = getUser(userEmail).getId();
+            likedByMe = postLikeRepository.existsByPostIdAndUserId(postId, userId);
+            scrappedByMe = postScrapRepository.existsByPostIdAndUserId(postId, userId);
+        }
+        return new PostResponse(post, likedByMe, scrappedByMe);
     }
 
     @Transactional
@@ -110,6 +124,39 @@ public class PostService {
         Post post = getPostOrThrow(postId);
         validateOwner(post.getWriter().getId(), user.getId());
         postRepository.delete(post);
+    }
+
+    @Transactional
+    public boolean toggleScrap(Long postId, String userEmail) {
+        User user = getUser(userEmail);
+        Post post = getPostOrThrow(postId);
+
+        return postScrapRepository.findByPostIdAndUserId(postId, user.getId())
+                .map(scrap -> {
+                    postScrapRepository.delete(scrap);
+                    return false;
+                })
+                .orElseGet(() -> {
+                    postScrapRepository.save(PostScrap.builder().post(post).user(user).build());
+                    return true;
+                });
+    }
+
+    public PostPageResponse getScrappedPosts(String userEmail, int page, int size) {
+        User user = getUser(userEmail);
+        List<Post> posts = postScrapRepository.findScrappedPostsByUserId(user.getId(), PageRequest.of(page, size + 1));
+
+        boolean hasNext = posts.size() > size;
+        List<Post> content = hasNext ? posts.subList(0, size) : posts;
+
+        List<Long> postIds = content.stream().map(Post::getId).collect(Collectors.toList());
+        Set<Long> likedPostIds = postIds.isEmpty() ? Set.of() : postLikeRepository.findLikedPostIds(postIds, user.getId());
+
+        List<PostResponse> responses = content.stream()
+                .map(post -> new PostResponse(post, likedPostIds.contains(post.getId()), true))
+                .collect(Collectors.toList());
+
+        return new PostPageResponse(responses, hasNext, page);
     }
 
     @Transactional
