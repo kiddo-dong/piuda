@@ -93,8 +93,9 @@ public class PostController {
     public ResponseEntity<PostPageResponse> getScrappedPosts(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) PostCategory category,
+            @RequestParam(defaultValue = "LATEST") SortType sortType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(postService.getScrappedPosts(userDetails.getUsername(), category, page, size));
+        return ResponseEntity.ok(postService.getScrappedPosts(userDetails.getUsername(), category, sortType, page, size));
     }
 }
