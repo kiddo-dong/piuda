@@ -15,6 +15,6 @@ public interface PostScrapRepository extends JpaRepository<PostScrap, Long> {
     @Query("SELECT ps.post.id FROM PostScrap ps WHERE ps.post.id IN :postIds AND ps.user.id = :userId")
     Set<Long> findScrappedPostIds(@Param("postIds") List<Long> postIds, @Param("userId") Long userId);
 
-    @Query("SELECT ps.post FROM PostScrap ps WHERE ps.user.id = :userId ORDER BY ps.id DESC")
-    List<Post> findScrappedPostsByUserId(@Param("userId") Long userId, org.springframework.data.domain.Pageable pageable);
+    @Query("SELECT ps.post FROM PostScrap ps WHERE ps.user.id = :userId AND (:category IS NULL OR ps.post.category = :category) ORDER BY ps.id DESC")
+    List<Post> findScrappedPostsByUserId(@Param("userId") Long userId, @Param("category") PostCategory category, org.springframework.data.domain.Pageable pageable);
 }

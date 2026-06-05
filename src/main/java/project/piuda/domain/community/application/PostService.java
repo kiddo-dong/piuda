@@ -142,9 +142,9 @@ public class PostService {
                 });
     }
 
-    public PostPageResponse getScrappedPosts(String userEmail, int page, int size) {
+    public PostPageResponse getScrappedPosts(String userEmail, PostCategory category, int page, int size) {
         User user = getUser(userEmail);
-        List<Post> posts = postScrapRepository.findScrappedPostsByUserId(user.getId(), PageRequest.of(page, size + 1));
+        List<Post> posts = postScrapRepository.findScrappedPostsByUserId(user.getId(), category, PageRequest.of(page, size + 1));
 
         boolean hasNext = posts.size() > size;
         List<Post> content = hasNext ? posts.subList(0, size) : posts;

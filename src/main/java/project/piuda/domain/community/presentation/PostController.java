@@ -92,8 +92,9 @@ public class PostController {
     @GetMapping("/scraps")
     public ResponseEntity<PostPageResponse> getScrappedPosts(
             @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) PostCategory category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(postService.getScrappedPosts(userDetails.getUsername(), page, size));
+        return ResponseEntity.ok(postService.getScrappedPosts(userDetails.getUsername(), category, page, size));
     }
 }
