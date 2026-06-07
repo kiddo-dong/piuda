@@ -21,14 +21,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./mvnw test -Dtest=ClassName#methodName
 ```
 
-**실행 전제조건:** MySQL 서버가 로컬 3306 포트에서 실행 중이어야 하며, `dementia_project` 스키마가 존재해야 한다.  
-`spring.jpa.hibernate.ddl-auto=create` 설정으로 **서버 재시작 시마다 테이블이 재생성**된다(데이터 초기화 주의).
+**실행 전제조건:**
+- MySQL 서버가 로컬 3306 포트에서 실행 중이어야 하며, `dementia_project` 스키마가 존재해야 한다.
+- PostgreSQL 서버가 로컬 5432 포트에서 실행 중이어야 하며, `piuda_vector` 스키마와 `vector` 확장이 활성화되어 있어야 한다.
+- `spring.jpa.hibernate.ddl-auto=update` 설정 중.
+
+**환경변수 (IDE Run Configuration에서 설정):**
+```
+MYSQL_PASSWORD=...
+PGVECTOR_PASSWORD=...
+OPENAI_API_KEY=...
+AWS_ACCESS_KEY=...
+AWS_SECRET_KEY=...
+GOOGLE_CLIENT_ID=...
+LINE_CLIENT_ID=...
+```
 
 ## 기술 스택
 
 - Java 21 / Spring Boot 3.5.0
 - Spring Security + JWT (JJWT 0.13.0) — Stateless, 토큰 유효시간 30분
 - Spring Data JPA + MySQL (`dementia_project` 스키마)
+- Spring AI 1.0.0 — OpenAI ChatModel + EmbeddingModel + PGVector RAG
+- PostgreSQL 16 + pgvector 0.8.0 (`piuda_vector` 스키마) — 벡터 저장소
 - AWS S3 (`spring-cloud-starter-aws 2.2.6`) — 이미지 업로드
 - Lombok + MapStruct
 - springdoc-openapi 2.8.8 — Swagger UI (`/swagger-ui.html`)
@@ -46,7 +61,8 @@ domain/<name>/
 
 공통 인프라는 `global/` 하위에 위치한다:
 - `global/security/` — JWT 필터(`JwtAuthenticationFilter`), Provider, CustomUserDetails
-- `global/infrastructure/` — `S3UploadService`
+- `global/config/` — `VectorStoreConfig` (PGVector 빈 수동 구성)
+- `global/infrastructure/` — `S3UploadService`, `RagChatClient`, `KnowledgeLoader`
 - `global/exception/` — `GlobalExceptionHandler`
 
 ## 도메인 구성 및 주요 연관 흐름
@@ -62,7 +78,7 @@ domain/<name>/
 | `memorygallery` | 환자별 사진 갤러리. S3 URL을 저장하며 Writer(User) 참조를 가짐 |
 | `community` | 게시글/댓글 커뮤니티. `PostCategory`: QNA/INFO/CAREGIVER_TIPS/EMOTION/RECOMMEND/ADVERTISEMENT/ITEM_SALE/GROUP_BUY |
 | `auth` | 소셜 로그인 (Google/Kakao/Line). 신규 사용자는 온보딩 필요 |
-| `careadvice` | AI 케어 어드바이스. OpenAI 연동, 세션 기반 대화 |
+| `careadvice` | AI 케어 어드바이스. Spring AI + PGVector RAG, 세션 기반 대화 |
 
 ### 핵심 비즈니스 규칙
 - **환자 등록** (`PatientService.registerPatient`) 시 `PatientMemory` 빈 레코드를 함께 생성한다.
@@ -72,12 +88,35 @@ domain/<name>/
 - **게시글 스크랩**: `PostScrap` 엔티티로 관리. 토글(`POST /scraps`), 취소(`DELETE /scraps`), 목록 조회(`GET /scraps`) 지원.
 - **게시글 정렬**: `SortType` — `LATEST`(커서 페이징), `VIEWS`/`LIKES`(오프셋 페이징).
 
+## RAG 파이프라인 (careadvice)
+
+```
+[앱 시작 시]
+resources/knowledge/*.pdf, *.json
+  → PagePdfDocumentReader / JsonReader
+  → TokenTextSplitter (청크 분할)
+  → OpenAI text-embedding-3-small (1536차원 임베딩)
+  → PGVector vector_store 테이블에 저장
+
+[메시지 수신 시]
+사용자 질문 → 임베딩 → PGVector 유사도 검색 (Top-3, threshold 0.6)
+  → 검색된 지식 + 환자 정보(PatientMemory) + 대화 이력(최근 10개)
+  → OpenAI gpt-4o-mini → 응답 생성 → MySQL에 저장
+```
+
+**지식 베이스 관리:**
+- PDF/JSON 파일은 `.gitignore` 처리됨 — 환경마다 `resources/knowledge/`에 직접 배치 필요
+- `knowledge.reload-on-startup=false` (기본값): vector_store가 비어있을 때만 인덱싱
+- `knowledge.reload-on-startup=true`: 강제 재인덱싱 (변경 시 먼저 `TRUNCATE vector_store` 권장)
+- `knowledge.pdf-start-page=5` (기본값): 총 페이지가 5 미만인 PDF는 자동으로 전체 읽기
+- JSON 형식: `[{"title": "...", "content": "..."}]` — `content` 필드가 벡터화됨
+
+**데이터소스 구성:**
+- MySQL (JPA): `spring.datasource.*` — Spring Boot 자동 구성
+- PostgreSQL (PGVector): `pgvector.datasource.*` — `VectorStoreConfig`에서 수동 구성 (`DataSource` 빈 미노출로 JPA와 충돌 방지)
+
 ## 인증
 
 - 인증 불필요 엔드포인트: `POST /api/v1/users/login`, `POST /api/v1/users/signup`, `POST /api/v1/devices`, `POST /api/v1/devices/*/voice`, `GET /api/v1/posts`, `GET /api/v1/posts/*`, `GET /api/v1/posts/*/comments`, `POST /api/v1/auth/*`
 - 나머지 모든 엔드포인트는 `Authorization: Bearer <JWT>` 헤더 필요
 - JWT에는 `userId`, `email`, `role` 클레임이 포함된다
-
-## 환경 설정
-
-`application.properties`에 AWS 자격증명, DB 비밀번호, JWT 시크릿이 평문으로 작성되어 있다. 실제 배포 시에는 환경변수나 외부 설정으로 분리 필요.
