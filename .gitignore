@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Knowledge Base (large binary files) ###
+src/main/resources/knowledge/*.pdf
+src/main/resources/knowledge/*.json

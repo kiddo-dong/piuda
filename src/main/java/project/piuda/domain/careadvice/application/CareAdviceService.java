@@ -14,7 +14,7 @@ import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
 import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
-import project.piuda.global.infrastructure.OpenAiChatClient;
+import project.piuda.global.infrastructure.RagChatClient;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,7 +33,7 @@ public class CareAdviceService {
     private final PatientRepository patientRepository;
     private final PatientMemberRepository patientMemberRepository;
     private final PatientMemoryRepository patientMemoryRepository;
-    private final OpenAiChatClient openAiChatClient;
+    private final RagChatClient ragChatClient;
 
     @Transactional
     public CareAdviceSessionResponse createSession(Long patientId, String userEmail) {
@@ -76,7 +76,7 @@ public class CareAdviceService {
         );
 
         String patientContext = buildPatientContext(session.getPatient());
-        String aiResponse = openAiChatClient.sendMessage(recentHistory, request.getContent(), patientContext);
+        String aiResponse = ragChatClient.sendMessage(recentHistory, request.getContent(), patientContext);
 
         CareAdviceMessage assistantMessage = messageRepository.save(
                 CareAdviceMessage.builder()
