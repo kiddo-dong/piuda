@@ -35,6 +35,12 @@ public class CaregiverProfile {
         this.birthDate = birthDate;
     }
 
+    public void update(Gender gender, LocalDate birthDate, Integer experienceYears) {
+        if (gender != null) this.gender = gender;
+        if (birthDate != null) this.birthDate = birthDate;
+        if (experienceYears != null) this.experienceYears = experienceYears;
+    }
+
     public void addScore(int score) {
         this.innerScore += score;
     }

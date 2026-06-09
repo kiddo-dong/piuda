@@ -113,7 +113,9 @@ public class UserService {
     public UserResponse getMe(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-        return new UserResponse(user);
+        CaregiverProfile profile = user.getRole() == Role.CAREGIVER
+                ? caregiverProfileRepository.findById(user.getId()).orElse(null) : null;
+        return new UserResponse(user, profile);
     }
 
     @Transactional
@@ -127,10 +129,27 @@ public class UserService {
         }
         String profileImageUrl = (image != null && !image.isEmpty())
                 ? s3UploadService.upload(image, "profiles") : user.getProfileImageUrl();
-        String encodedPassword = request.getPassword() != null && !request.getPassword().isBlank()
-                ? passwordEncoder.encode(request.getPassword()) : null;
+        String encodedPassword = null;
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            if (user.getPassword() == null) {
+                throw new BusinessException("소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.");
+            }
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                throw new BusinessException("현재 비밀번호를 입력해주세요.");
+            }
+            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                throw new BusinessException("현재 비밀번호가 일치하지 않습니다.");
+            }
+            encodedPassword = passwordEncoder.encode(request.getPassword());
+        }
         user.update(request.getName(), request.getNickname(), request.getPhone(),
                 profileImageUrl, request.getIntroduction(), encodedPassword);
+
+        if (user.getRole() == Role.CAREGIVER) {
+            CaregiverProfile profile = caregiverProfileRepository.findById(user.getId())
+                    .orElseThrow(() -> new NotFoundException("간병인 프로필을 찾을 수 없습니다."));
+            profile.update(request.getGender(), request.getBirthDate(), request.getExperienceYears());
+        }
     }
 
     @Transactional
