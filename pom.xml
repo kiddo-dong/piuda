@@ -140,6 +140,14 @@
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-model-openai</artifactId>
+			<exclusions>
+				<!-- Spring AI가 끌어오는 non-jakarta swagger-annotations가
+				     springdoc의 swagger-core-jakarta와 클래스 충돌을 일으켜 제외 -->
+				<exclusion>
+					<groupId>io.swagger.core.v3</groupId>
+					<artifactId>swagger-annotations</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- Spring AI - PGVector (자동 구성 없이 core만, MySQL JPA와 datasource 충돌 방지) -->
