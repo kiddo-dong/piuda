@@ -5,7 +5,7 @@ public enum PostCategory {
     INFO,
     CAREGIVER_TIPS,
     EMOTION,
-    RECOMMEND,
+    STORY,
     ADVERTISEMENT,
     ITEM_SALE,
     GROUP_BUY
