@@ -1,6 +1,7 @@
 package project.piuda.global.infrastructure;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import project.piuda.global.exception.BusinessException;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -47,6 +49,15 @@ public class S3UploadService {
         File uploadFile = convert(multipartFile)
                 .orElseThrow(() -> new BusinessException("파일 변환에 실패했습니다."));
         return upload(uploadFile, dirName);
+    }
+
+    public String uploadAudioBytes(byte[] bytes, String dirName) {
+        String fileName = dirName + "/" + UUID.randomUUID() + ".wav";
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType("audio/wav");
+        metadata.setContentLength(bytes.length);
+        amazonS3Client.putObject(bucket, fileName, new ByteArrayInputStream(bytes), metadata);
+        return amazonS3Client.getUrl(bucket, fileName).toString();
     }
 
     private void validateImage(MultipartFile file) {

@@ -49,7 +49,8 @@ public class SecurityConfig {
                 // 최신 함수형 설정 문법 반영 (creationPolicy 에러 해결)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/users/login", "/api/v1/users/signup", "/api/v1/users/refresh", "/api/v1/devices", "/api/v1/devices/*/voice", "/api/v1/users/check-nickname").permitAll()
+                        .requestMatchers("/api/v1/users/login", "/api/v1/users/signup", "/api/v1/users/refresh", "/api/v1/users/check-nickname").permitAll()
+                        .requestMatchers("/api/v1/devices", "/api/v1/devices/*/voice", "/api/v1/devices/*/tts/next", "/api/v1/devices/*/tts/*/ack").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/*", "/api/v1/posts/*/comments").permitAll()

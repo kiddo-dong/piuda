@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.device.application.DeviceService;
 import project.piuda.domain.device.application.dto.DeviceRegisterRequest;
+import project.piuda.domain.device.application.dto.TtsNextResponse;
+import project.piuda.domain.device.application.dto.TtsQueueRequest;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Tag(name = "Device", description = "IoT 디바이스 API")
 @RestController
@@ -39,6 +42,42 @@ public class DeviceController {
             @Parameter(description = "디바이스 시리얼 번호") @PathVariable String deviceSerial,
             @Parameter(description = "녹음 파일 (audio)") @RequestParam("audio") MultipartFile audioFile) throws IOException {
         deviceService.saveVoiceRecord(deviceSerial, audioFile);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "TTS 메시지 전송 (앱 → 기기)", description = "텍스트를 TTS 변환하여 기기 재생 큐에 등록합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "큐 등록 성공"),
+            @ApiResponse(responseCode = "404", description = "디바이스 없음")
+    })
+    @PostMapping("/{deviceSerial}/tts")
+    public ResponseEntity<Void> queueTts(
+            @Parameter(description = "디바이스 시리얼 번호") @PathVariable String deviceSerial,
+            @RequestBody TtsQueueRequest request) throws IOException {
+        deviceService.queueTts(deviceSerial, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "다음 TTS 메시지 조회 (기기 폴링)", description = "ESP32가 주기적으로 호출하여 재생할 TTS 오디오 URL을 받습니다. 인증 불필요.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "재생할 메시지 있음"),
+            @ApiResponse(responseCode = "204", description = "재생할 메시지 없음")
+    })
+    @GetMapping("/{deviceSerial}/tts/next")
+    public ResponseEntity<TtsNextResponse> getNextTts(
+            @Parameter(description = "디바이스 시리얼 번호") @PathVariable String deviceSerial) {
+        Optional<TtsNextResponse> next = deviceService.getNextTts(deviceSerial);
+        return next.map(ResponseEntity::ok)
+                   .orElse(ResponseEntity.noContent().build());
+    }
+
+    @Operation(summary = "TTS 재생 완료 ACK (기기)", description = "ESP32가 재생 완료 후 호출합니다. 인증 불필요.")
+    @ApiResponse(responseCode = "200", description = "ACK 성공")
+    @PostMapping("/{deviceSerial}/tts/{messageId}/ack")
+    public ResponseEntity<Void> ackTts(
+            @Parameter(description = "디바이스 시리얼 번호") @PathVariable String deviceSerial,
+            @Parameter(description = "메시지 ID") @PathVariable Long messageId) {
+        deviceService.ackTts(deviceSerial, messageId);
         return ResponseEntity.ok().build();
     }
 }
