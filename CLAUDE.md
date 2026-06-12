@@ -40,7 +40,7 @@ LINE_CLIENT_ID=...
 ## 기술 스택
 
 - Java 21 / Spring Boot 3.5.0
-- Spring Security + JWT (JJWT 0.13.0) — Stateless, 토큰 유효시간 30분
+- Spring Security + JWT (JJWT 0.13.0) — Stateless, 액세스 토큰 30분 / 리프레시 토큰 14일
 - Spring Data JPA + MySQL (`dementia_project` 스키마)
 - Spring AI 1.0.0 — OpenAI ChatModel + EmbeddingModel + PGVector RAG
 - PostgreSQL 16 + pgvector 0.8.0 (`piuda_vector` 스키마) — 벡터 저장소
@@ -118,6 +118,13 @@ resources/knowledge/*.pdf, *.json
 
 ## 인증
 
-- 인증 불필요 엔드포인트: `POST /api/v1/users/login`, `POST /api/v1/users/signup`, `POST /api/v1/devices`, `POST /api/v1/devices/*/voice`, `GET /api/v1/posts`, `GET /api/v1/posts/*`, `GET /api/v1/posts/*/comments`, `POST /api/v1/auth/*`
+- 인증 불필요 엔드포인트: `POST /api/v1/users/login`, `POST /api/v1/users/signup`, `POST /api/v1/users/refresh`, `POST /api/v1/devices`, `POST /api/v1/devices/*/voice`, `GET /api/v1/posts`, `GET /api/v1/posts/*`, `GET /api/v1/posts/*/comments`, `POST /api/v1/auth/*`
 - 나머지 모든 엔드포인트는 `Authorization: Bearer <JWT>` 헤더 필요
 - JWT에는 `userId`, `email`, `role` 클레임이 포함된다
+
+## 인증 토큰 흐름
+
+- **로그인/소셜 로그인/온보딩** 시 `accessToken`(30분) + `refreshToken`(14일) 함께 발급
+- **액세스 토큰 재발급**: `POST /api/v1/users/refresh?refreshToken=<값>` — 새 액세스/리프레시 토큰 반환 (Token Rotation)
+- **로그아웃**: `POST /api/v1/users/logout` — DB의 리프레시 토큰 삭제
+- 리프레시 토큰은 `refresh_tokens` 테이블(MySQL)에 저장. 사용자 1명당 1개 유지
