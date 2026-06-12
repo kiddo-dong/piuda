@@ -16,6 +16,7 @@ import project.piuda.domain.user.application.dto.UserUpdateRequest;
 import project.piuda.domain.user.domain.*;
 import project.piuda.global.exception.BusinessException;
 import project.piuda.global.exception.ConflictException;
+import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.S3UploadService;
 import project.piuda.global.security.JwtTokenProvider;
@@ -31,6 +32,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final CaregiverProfileRepository caregiverProfileRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final BCryptPasswordEncoder passwordEncoder;
     private final S3UploadService s3UploadService;
@@ -91,8 +93,9 @@ public class UserService {
                     .build();
             caregiverProfileRepository.save(profile);
         }
-        String token = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
-        return new TokenResponse(token);
+        String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
+        String refreshToken = issueRefreshToken(user);
+        return new TokenResponse(accessToken, refreshToken);
     }
 
     public TokenResponse login(LoginRequest request) {
@@ -106,8 +109,48 @@ public class UserService {
             throw new BusinessException("이메일 또는 비밀번호가 일치하지 않습니다.");
         }
 
-        String token = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
-        return new TokenResponse(token);
+        String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
+        String refreshToken = issueRefreshToken(user);
+        return new TokenResponse(accessToken, refreshToken);
+    }
+
+    @Transactional
+    public TokenResponse refresh(String refreshTokenValue) {
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
+                .orElseThrow(() -> new ForbiddenException("유효하지 않은 리프레시 토큰입니다."));
+
+        if (refreshToken.isExpired()) {
+            refreshTokenRepository.delete(refreshToken);
+            throw new ForbiddenException("리프레시 토큰이 만료되었습니다. 다시 로그인해 주세요.");
+        }
+
+        User user = refreshToken.getUser();
+        String newAccessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
+        String newRefreshTokenValue = jwtTokenProvider.createRefreshToken();
+        refreshToken.rotate(newRefreshTokenValue, jwtTokenProvider.getRefreshTokenExpiry());
+
+        return new TokenResponse(newAccessToken, newRefreshTokenValue);
+    }
+
+    @Transactional
+    public void logout(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        refreshTokenRepository.deleteByUser(user);
+    }
+
+    @Transactional
+    private String issueRefreshToken(User user) {
+        String tokenValue = jwtTokenProvider.createRefreshToken();
+        refreshTokenRepository.findByUser(user).ifPresentOrElse(
+                rt -> rt.rotate(tokenValue, jwtTokenProvider.getRefreshTokenExpiry()),
+                () -> refreshTokenRepository.save(RefreshToken.builder()
+                        .user(user)
+                        .token(tokenValue)
+                        .expiryDate(jwtTokenProvider.getRefreshTokenExpiry())
+                        .build())
+        );
+        return tokenValue;
     }
 
     public UserResponse getMe(String email) {

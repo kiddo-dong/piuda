@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.user.application.dto.SocialLoginResponse;
 import project.piuda.domain.user.domain.AuthProvider;
+import project.piuda.domain.user.domain.RefreshToken;
+import project.piuda.domain.user.domain.RefreshTokenRepository;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
 import project.piuda.global.infrastructure.GoogleAuthClient;
@@ -19,6 +21,7 @@ import project.piuda.global.security.JwtTokenProvider;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final GoogleAuthClient googleAuthClient;
     private final KakaoAuthClient kakaoAuthClient;
@@ -47,9 +50,18 @@ public class AuthService {
                 .orElseGet(() -> createUser(userInfo, provider));
 
         String roleStr = user.getRole() != null ? user.getRole().name() : "NONE";
-        String token = jwtTokenProvider.createToken(user.getId(), user.getEmail(), roleStr);
+        String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), roleStr);
+        String refreshTokenValue = jwtTokenProvider.createRefreshToken();
+        refreshTokenRepository.findByUser(user).ifPresentOrElse(
+                rt -> rt.rotate(refreshTokenValue, jwtTokenProvider.getRefreshTokenExpiry()),
+                () -> refreshTokenRepository.save(RefreshToken.builder()
+                        .user(user)
+                        .token(refreshTokenValue)
+                        .expiryDate(jwtTokenProvider.getRefreshTokenExpiry())
+                        .build())
+        );
 
-        return new SocialLoginResponse(token, !user.isOnboardingDone());
+        return new SocialLoginResponse(accessToken, refreshTokenValue, !user.isOnboardingDone());
     }
 
     private User createUser(SocialUserInfo userInfo, AuthProvider provider) {

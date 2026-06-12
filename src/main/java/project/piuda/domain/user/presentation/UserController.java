@@ -75,6 +75,24 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "액세스 토큰 재발급", description = "리프레시 토큰으로 새 액세스 토큰을 발급받습니다. 인증 불필요.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "재발급 성공"),
+            @ApiResponse(responseCode = "403", description = "유효하지 않거나 만료된 리프레시 토큰")
+    })
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refresh(@RequestParam String refreshToken) {
+        return ResponseEntity.ok(service.refresh(refreshToken));
+    }
+
+    @Operation(summary = "로그아웃", description = "리프레시 토큰을 삭제합니다.")
+    @ApiResponse(responseCode = "200", description = "로그아웃 성공")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        service.logout(userDetails.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
     @Operation(summary = "소셜 로그인 온보딩", description = "소셜 로그인 신규 사용자가 닉네임, 역할 등 추가 정보를 입력합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "온보딩 완료 - JWT 토큰 반환"),
