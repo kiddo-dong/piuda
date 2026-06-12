@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import project.piuda.domain.device.application.DeviceService;
 import project.piuda.domain.device.application.dto.*;
 
@@ -39,9 +37,8 @@ public class DeviceController {
     })
     @DeleteMapping("/{deviceId}")
     public ResponseEntity<Void> deleteDevice(
-            @Parameter(description = "기기 ID") @PathVariable Long deviceId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        deviceService.deleteDevice(deviceId, userDetails.getUsername());
+            @Parameter(description = "기기 ID") @PathVariable Long deviceId) {
+        deviceService.deleteDevice(deviceId);
         return ResponseEntity.ok().build();
     }
 

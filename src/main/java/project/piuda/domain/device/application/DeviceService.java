@@ -84,7 +84,7 @@ public class DeviceService {
 
     // 기기 삭제
     @Transactional
-    public void deleteDevice(Long deviceId, String userEmail) {
+    public void deleteDevice(Long deviceId) {
         Device device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 기기입니다."));
 
