@@ -9,10 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import project.piuda.domain.device.application.DeviceService;
-import project.piuda.domain.device.application.dto.DeviceRegisterRequest;
-import project.piuda.domain.device.application.dto.TtsNextResponse;
-import project.piuda.domain.device.application.dto.TtsQueueRequest;
+import project.piuda.domain.device.application.dto.*;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -30,6 +30,19 @@ public class DeviceController {
     @PostMapping
     public ResponseEntity<Long> registerDevice(@RequestBody DeviceRegisterRequest request) {
         return ResponseEntity.ok(deviceService.registerDevice(request));
+    }
+
+    @Operation(summary = "기기 삭제", description = "기기를 삭제합니다. 연결된 환자가 있으면 자동으로 해제됩니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "기기 없음")
+    })
+    @DeleteMapping("/{deviceId}")
+    public ResponseEntity<Void> deleteDevice(
+            @Parameter(description = "기기 ID") @PathVariable Long deviceId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        deviceService.deleteDevice(deviceId, userDetails.getUsername());
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "음성 녹음 파일 업로드", description = "ESP32 마이크가 환자 응답 녹음 후 전송하는 엔드포인트입니다. 인증 불필요.")

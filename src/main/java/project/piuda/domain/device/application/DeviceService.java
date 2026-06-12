@@ -7,12 +7,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import project.piuda.domain.device.application.dto.DeviceRegisterRequest;
-import project.piuda.domain.device.application.dto.TtsNextResponse;
-import project.piuda.domain.device.application.dto.TtsQueueRequest;
+import project.piuda.domain.device.application.dto.*;
 import project.piuda.domain.device.domain.*;
 import project.piuda.domain.patient.domain.Patient;
+import project.piuda.domain.patient.domain.PatientMemberRepository;
 import project.piuda.domain.patient.domain.PatientRepository;
+import project.piuda.domain.user.domain.User;
+import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.S3UploadService;
 
@@ -30,11 +32,68 @@ public class DeviceService {
     private final VoiceRecordRepository voiceRecordRepository;
     private final DeviceTtsMessageRepository ttsMessageRepository;
     private final PatientRepository patientRepository;
+    private final PatientMemberRepository patientMemberRepository;
+    private final UserRepository userRepository;
     private final S3UploadService s3UploadService;
     private final RestTemplate restTemplate;
 
     @Value("${spring.ai.openai.api-key}")
     private String openAiApiKey;
+
+    // 환자에 연결된 기기 조회
+    public DeviceResponse getDeviceByPatient(Long patientId, String userEmail) {
+        User user = getUser(userEmail);
+        Patient patient = getPatient(patientId);
+        validateAccess(patient, user);
+
+        if (patient.getDevice() == null) {
+            throw new NotFoundException("연결된 기기가 없습니다.");
+        }
+        return new DeviceResponse(patient.getDevice());
+    }
+
+    // 환자에 기기 연동
+    @Transactional
+    public void linkDevice(Long patientId, String userEmail, DeviceLinkRequest request) {
+        User user = getUser(userEmail);
+        Patient patient = getPatient(patientId);
+        validateAccess(patient, user);
+
+        Device device = deviceRepository.findByDeviceSerial(request.getDeviceSerial())
+                .orElseThrow(() -> new NotFoundException("등록되지 않은 기기입니다."));
+
+        if (patientRepository.findByDeviceDeviceSerial(request.getDeviceSerial()).isPresent()) {
+            throw new IllegalStateException("이미 다른 환자에 연결된 기기입니다.");
+        }
+
+        patient.assignDevice(device);
+    }
+
+    // 환자에서 기기 연동 해제
+    @Transactional
+    public void unlinkDevice(Long patientId, String userEmail) {
+        User user = getUser(userEmail);
+        Patient patient = getPatient(patientId);
+        validateAccess(patient, user);
+
+        if (patient.getDevice() == null) {
+            throw new NotFoundException("연결된 기기가 없습니다.");
+        }
+        patient.removeDevice();
+    }
+
+    // 기기 삭제
+    @Transactional
+    public void deleteDevice(Long deviceId, String userEmail) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 기기입니다."));
+
+        // 연결된 환자가 있으면 먼저 해제
+        patientRepository.findByDeviceDeviceSerial(device.getDeviceSerial())
+                .ifPresent(Patient::removeDevice);
+
+        deviceRepository.delete(device);
+    }
 
     @Transactional
     public Long registerDevice(DeviceRegisterRequest request) {
@@ -93,6 +152,22 @@ public class DeviceService {
             throw new NotFoundException("해당 디바이스의 메시지가 아닙니다.");
         }
         msg.markPlayed();
+    }
+
+    private User getUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+    }
+
+    private Patient getPatient(Long patientId) {
+        return patientRepository.findById(patientId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+    }
+
+    private void validateAccess(Patient patient, User user) {
+        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
+            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
+        }
     }
 
     private byte[] generateTtsAudio(String text) {
