@@ -14,6 +14,8 @@ import project.piuda.domain.patient.domain.PatientMemberRepository;
 import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.BusinessException;
+import project.piuda.global.exception.ConflictException;
 import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.S3UploadService;
@@ -63,7 +65,7 @@ public class DeviceService {
                 .orElseThrow(() -> new NotFoundException("등록되지 않은 기기입니다."));
 
         if (patientRepository.findByDeviceDeviceSerial(request.getDeviceSerial()).isPresent()) {
-            throw new IllegalStateException("이미 다른 환자에 연결된 기기입니다.");
+            throw new ConflictException("이미 다른 환자에 연결된 기기입니다.");
         }
 
         patient.assignDevice(device);
@@ -107,7 +109,7 @@ public class DeviceService {
     @Transactional
     public void saveVoiceRecord(String deviceSerial, MultipartFile audioFile) throws IOException {
         Patient patient = patientRepository.findByDeviceDeviceSerial(deviceSerial)
-                .orElseThrow(() -> new IllegalArgumentException("해당 시리얼의 디바이스에 연동된 환자가 없습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 시리얼의 디바이스에 연동된 환자가 없습니다."));
 
         String audioUrl = s3UploadService.uploadAudio(audioFile, "voice-records");
 
@@ -190,7 +192,7 @@ public class DeviceService {
         );
 
         if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
-            throw new RuntimeException("OpenAI TTS 생성 실패");
+            throw new BusinessException("OpenAI TTS 생성에 실패했습니다.");
         }
         return response.getBody();
     }

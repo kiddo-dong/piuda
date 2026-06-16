@@ -17,6 +17,7 @@ import project.piuda.domain.patient.domain.PatientMemberRepository;
 import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.BusinessException;
 import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.S3UploadService;
@@ -46,6 +47,9 @@ public class MemoryGalleryService {
         User writer = getUser(userEmail);
         validatePatientAccess(patient, writer);
 
+        if (image == null || image.isEmpty()) {
+            throw new BusinessException("이미지 파일이 필요합니다.");
+        }
         String imageUrl = s3UploadService.upload(image, "memory-gallery");
         memoryGalleryRepository.save(MemoryGallery.builder()
                 .patient(patient)
