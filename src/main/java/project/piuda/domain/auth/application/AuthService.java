@@ -9,6 +9,7 @@ import project.piuda.domain.user.domain.RefreshToken;
 import project.piuda.domain.user.domain.RefreshTokenRepository;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
+import project.piuda.global.exception.ConflictException;
 import project.piuda.global.infrastructure.GoogleAuthClient;
 import project.piuda.global.infrastructure.KakaoAuthClient;
 import project.piuda.global.infrastructure.LineAuthClient;
@@ -47,7 +48,14 @@ public class AuthService {
 
     private SocialLoginResponse processLogin(SocialUserInfo userInfo, AuthProvider provider) {
         User user = userRepository.findByProviderAndProviderId(provider, userInfo.id())
-                .orElseGet(() -> createUser(userInfo, provider));
+                .orElseGet(() -> {
+                    // 동일 이메일로 기존 가입 계정이 있으면 소셜 로그인 불가
+                    if (userInfo.email() != null && !userInfo.email().isBlank()
+                            && userRepository.findByEmail(userInfo.email()).isPresent()) {
+                        throw new ConflictException("이미 해당 이메일로 가입된 계정이 있습니다. 기존 계정으로 로그인해 주세요.");
+                    }
+                    return createUser(userInfo, provider);
+                });
 
         String roleStr = user.getRole() != null ? user.getRole().name() : "NONE";
         String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), roleStr);
