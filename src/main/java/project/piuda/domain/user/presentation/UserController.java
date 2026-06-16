@@ -75,9 +75,22 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "액세스 토큰 재발급", description = "리프레시 토큰으로 새 액세스 토큰을 발급받습니다. 인증 불필요.")
+    @Operation(
+            summary = "액세스 토큰 재발급",
+            description = """
+                    리프레시 토큰으로 새 액세스/리프레시 토큰을 발급받습니다. 인증 불필요.
+
+                    **Request Body (application/json)**
+                    ```json
+                    { "refreshToken": "<발급받은 리프레시 토큰>" }
+                    ```
+
+                    - Token Rotation 방식: 호출마다 리프레시 토큰도 새로 발급됩니다.
+                    - 이전 리프레시 토큰은 즉시 무효화되므로 응답의 새 토큰으로 교체 저장하세요.
+                    """
+    )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "재발급 성공"),
+            @ApiResponse(responseCode = "200", description = "재발급 성공 — 새 accessToken, refreshToken 반환"),
             @ApiResponse(responseCode = "403", description = "유효하지 않거나 만료된 리프레시 토큰")
     })
     @PostMapping("/refresh")
