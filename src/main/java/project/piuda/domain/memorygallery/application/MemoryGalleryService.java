@@ -51,12 +51,17 @@ public class MemoryGalleryService {
             throw new BusinessException("이미지 파일이 필요합니다.");
         }
         String imageUrl = s3UploadService.upload(image, "memory-gallery");
-        memoryGalleryRepository.save(MemoryGallery.builder()
-                .patient(patient)
-                .writer(writer)
-                .imageUrl(imageUrl)
-                .memo(memo)
-                .build());
+        try {
+            memoryGalleryRepository.save(MemoryGallery.builder()
+                    .patient(patient)
+                    .writer(writer)
+                    .imageUrl(imageUrl)
+                    .memo(memo)
+                    .build());
+        } catch (Exception e) {
+            s3UploadService.delete(imageUrl);
+            throw e;
+        }
     }
 
     public List<PhotoGalleryItem> getPhotoGallery(Long patientId, String userEmail) {

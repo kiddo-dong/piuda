@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3UploadService {
@@ -49,6 +51,15 @@ public class S3UploadService {
         File uploadFile = convert(multipartFile)
                 .orElseThrow(() -> new BusinessException("파일 변환에 실패했습니다."));
         return upload(uploadFile, dirName);
+    }
+
+    public void delete(String fileUrl) {
+        try {
+            String key = fileUrl.substring(fileUrl.indexOf(".com/") + 5);
+            amazonS3Client.deleteObject(bucket, key);
+        } catch (Exception e) {
+            log.warn("S3 파일 삭제 실패: {}", fileUrl, e);
+        }
     }
 
     public String uploadAudioBytes(byte[] bytes, String dirName) {

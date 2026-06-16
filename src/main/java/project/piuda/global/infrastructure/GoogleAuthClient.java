@@ -1,5 +1,6 @@
 package project.piuda.global.infrastructure;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -7,6 +8,7 @@ import project.piuda.global.exception.BusinessException;
 
 import java.util.Map;
 
+@Slf4j
 @Component
 public class GoogleAuthClient {
 
@@ -39,6 +41,7 @@ public class GoogleAuthClient {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
+            log.error("Google 토큰 검증 실패", e);
             throw new BusinessException("유효하지 않은 Google ID Token입니다.");
         }
     }

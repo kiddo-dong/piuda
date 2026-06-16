@@ -1,5 +1,6 @@
 package project.piuda.global.infrastructure;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import project.piuda.global.exception.BusinessException;
 
 import java.util.Map;
 
+@Slf4j
 @Component
 public class LineAuthClient {
 
@@ -43,6 +45,7 @@ public class LineAuthClient {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
+            log.error("Line 토큰 검증 실패", e);
             throw new BusinessException("유효하지 않은 Line ID Token입니다.");
         }
     }

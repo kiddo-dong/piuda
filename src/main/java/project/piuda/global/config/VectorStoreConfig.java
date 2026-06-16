@@ -13,10 +13,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Configuration
 public class VectorStoreConfig {
 
-    // DataSource 빈을 노출하지 않고 JdbcTemplate 내부에서만 생성
-    // → Spring Boot의 MySQL DataSource 자동 구성과 충돌 ��지
-    @Bean(name = "pgVectorJdbcTemplate")
-    public JdbcTemplate pgVectorJdbcTemplate(
+    // DataSource 빈 이름을 "pgVectorDataSource"로 명시해 MySQL 자동 구성과 충돌 방지
+    // destroyMethod = "close" 로 앱 종료 시 연결 풀이 정상 해제됨
+    @Bean(name = "pgVectorDataSource", destroyMethod = "close")
+    public HikariDataSource pgVectorDataSource(
             @Value("${pgvector.datasource.url}") String url,
             @Value("${pgvector.datasource.username}") String username,
             @Value("${pgvector.datasource.password}") String password) {
@@ -25,7 +25,13 @@ public class VectorStoreConfig {
         ds.setUsername(username);
         ds.setPassword(password);
         ds.setDriverClassName("org.postgresql.Driver");
-        return new JdbcTemplate(ds);
+        return ds;
+    }
+
+    @Bean(name = "pgVectorJdbcTemplate")
+    public JdbcTemplate pgVectorJdbcTemplate(
+            @Qualifier("pgVectorDataSource") HikariDataSource dataSource) {
+        return new JdbcTemplate(dataSource);
     }
 
     @Bean

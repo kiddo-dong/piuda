@@ -49,26 +49,31 @@ public class UserService {
         String profileImageUrl = (image != null && !image.isEmpty())
                 ? s3UploadService.upload(image, "profiles") : null;
 
-        User user = User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .nickname(request.getNickname())
-                .phone(request.getPhone())
-                .profileImageUrl(profileImageUrl)
-                .introduction(request.getIntroduction())
-                .role(request.getRole())
-                .build();
-        userRepository.save(user);
-
-        if (request.getRole() == Role.CAREGIVER) {
-            CaregiverProfile profile = CaregiverProfile.builder()
-                    .user(user)
-                    .experienceYears(request.getExperienceYears() != null ? request.getExperienceYears() : 0)
-                    .gender(request.getGender())
-                    .birthDate(request.getBirthDate())
+        try {
+            User user = User.builder()
+                    .email(request.getEmail())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .name(request.getName())
+                    .nickname(request.getNickname())
+                    .phone(request.getPhone())
+                    .profileImageUrl(profileImageUrl)
+                    .introduction(request.getIntroduction())
+                    .role(request.getRole())
                     .build();
-            caregiverProfileRepository.save(profile);
+            userRepository.save(user);
+
+            if (request.getRole() == Role.CAREGIVER) {
+                CaregiverProfile profile = CaregiverProfile.builder()
+                        .user(user)
+                        .experienceYears(request.getExperienceYears() != null ? request.getExperienceYears() : 0)
+                        .gender(request.getGender())
+                        .birthDate(request.getBirthDate())
+                        .build();
+                caregiverProfileRepository.save(profile);
+            }
+        } catch (Exception e) {
+            if (profileImageUrl != null) s3UploadService.delete(profileImageUrl);
+            throw e;
         }
     }
 

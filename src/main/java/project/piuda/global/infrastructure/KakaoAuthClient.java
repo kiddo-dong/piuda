@@ -1,11 +1,13 @@
 package project.piuda.global.infrastructure;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import project.piuda.global.exception.BusinessException;
 
 import java.util.Map;
 
+@Slf4j
 @Component
 public class KakaoAuthClient {
 
@@ -42,6 +44,7 @@ public class KakaoAuthClient {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
+            log.error("Kakao 토큰 검증 실패", e);
             throw new BusinessException("유효하지 않은 Kakao Access Token입니다.");
         }
     }

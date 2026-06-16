@@ -88,8 +88,8 @@ public class PostService {
 
     @Transactional
     public PostResponse getPost(Long postId, String userEmail) {
+        postRepository.incrementViewCount(postId);
         Post post = getPostOrThrow(postId);
-        post.increaseViewCount();
         boolean likedByMe = false;
         boolean scrappedByMe = false;
         if (userEmail != null) {
@@ -180,12 +180,12 @@ public class PostService {
         return postLikeRepository.findByPostIdAndUserId(postId, user.getId())
                 .map(like -> {
                     postLikeRepository.delete(like);
-                    post.decreaseLike();
+                    postRepository.decrementLikeCount(postId);
                     return false;
                 })
                 .orElseGet(() -> {
                     postLikeRepository.save(PostLike.builder().post(post).user(user).build());
-                    post.increaseLike();
+                    postRepository.incrementLikeCount(postId);
                     return true;
                 });
     }

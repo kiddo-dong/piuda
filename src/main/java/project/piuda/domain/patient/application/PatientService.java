@@ -50,9 +50,14 @@ public class PatientService {
     }
 
     @Transactional
-    public void connectDevice(Long patientId, String deviceSerial) {
+    public void connectDevice(Long patientId, Long userId, String deviceSerial) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
+            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
+        }
         Device device = deviceRepository.findByDeviceSerial(deviceSerial)
                 .orElseThrow(() -> new NotFoundException("등록되지 않은 디바이스 시리얼입니다."));
         patient.assignDevice(device);

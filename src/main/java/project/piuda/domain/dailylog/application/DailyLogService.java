@@ -52,47 +52,52 @@ public class DailyLogService {
 
         String imageUrl = (image != null && !image.isEmpty()) ? s3UploadService.upload(image, "daily-log") : null;
 
-        DailyLog dailyLog = DailyLog.builder()
-                .patient(patient)
-                .writer(writer)
-                .logDate(request.getLogDate())
-                .startTime(request.getStartTime())
-                .endTime(request.getEndTime())
-                .physicalHygiene(request.isPhysicalHygiene())
-                .physicalBath(request.isPhysicalBath())
-                .physicalMealHelp(request.isPhysicalMealHelp())
-                .physicalPositionChange(request.isPhysicalPositionChange())
-                .physicalMobilityHelp(request.isPhysicalMobilityHelp())
-                .physicalToiletHelp(request.isPhysicalToiletHelp())
-                .physicalTotalMinutes(request.getPhysicalTotalMinutes())
-                .cognitiveStimulationMinutes(request.getCognitiveStimulationMinutes())
-                .cognitiveLifeTogetherMinutes(request.getCognitiveLifeTogetherMinutes())
-                .cognitiveBehaviorManagementMinutes(request.getCognitiveBehaviorManagementMinutes())
-                .emotionalCommunicationMinutes(request.getEmotionalCommunicationMinutes())
-                .householdMealClean(request.isHouseholdMealClean())
-                .householdPersonalHelp(request.isHouseholdPersonalHelp())
-                .householdTotalMinutes(request.getHouseholdTotalMinutes())
-                .physicalFunctionTrend(request.getPhysicalFunctionTrend())
-                .mealFunctionTrend(request.getMealFunctionTrend())
-                .bowelIncontinenceCount(request.getBowelIncontinenceCount())
-                .urineIncontinenceCount(request.getUrineIncontinenceCount())
-                .specialNotes(request.getSpecialNotes())
-                .imageUrl(imageUrl)
-                .build();
+        try {
+            DailyLog dailyLog = DailyLog.builder()
+                    .patient(patient)
+                    .writer(writer)
+                    .logDate(request.getLogDate())
+                    .startTime(request.getStartTime())
+                    .endTime(request.getEndTime())
+                    .physicalHygiene(request.isPhysicalHygiene())
+                    .physicalBath(request.isPhysicalBath())
+                    .physicalMealHelp(request.isPhysicalMealHelp())
+                    .physicalPositionChange(request.isPhysicalPositionChange())
+                    .physicalMobilityHelp(request.isPhysicalMobilityHelp())
+                    .physicalToiletHelp(request.isPhysicalToiletHelp())
+                    .physicalTotalMinutes(request.getPhysicalTotalMinutes())
+                    .cognitiveStimulationMinutes(request.getCognitiveStimulationMinutes())
+                    .cognitiveLifeTogetherMinutes(request.getCognitiveLifeTogetherMinutes())
+                    .cognitiveBehaviorManagementMinutes(request.getCognitiveBehaviorManagementMinutes())
+                    .emotionalCommunicationMinutes(request.getEmotionalCommunicationMinutes())
+                    .householdMealClean(request.isHouseholdMealClean())
+                    .householdPersonalHelp(request.isHouseholdPersonalHelp())
+                    .householdTotalMinutes(request.getHouseholdTotalMinutes())
+                    .physicalFunctionTrend(request.getPhysicalFunctionTrend())
+                    .mealFunctionTrend(request.getMealFunctionTrend())
+                    .bowelIncontinenceCount(request.getBowelIncontinenceCount())
+                    .urineIncontinenceCount(request.getUrineIncontinenceCount())
+                    .specialNotes(request.getSpecialNotes())
+                    .imageUrl(imageUrl)
+                    .build();
 
-        DailyLog savedLog = dailyLogRepository.save(dailyLog);
+            DailyLog savedLog = dailyLogRepository.save(dailyLog);
 
-        careCalendarRepository.save(CareCalendar.builder()
-                .patient(patient)
-                .writer(writer)
-                .dailyLog(savedLog)
-                .title(writer.getName() + "님의 하루 일지 작성 완료")
-                .calendarType(CalendarType.DAILY_LOG)
-                .startTime(request.getLogDate().atTime(request.getStartTime()))
-                .endTime(request.getLogDate().atTime(request.getEndTime()))
-                .build());
+            careCalendarRepository.save(CareCalendar.builder()
+                    .patient(patient)
+                    .writer(writer)
+                    .dailyLog(savedLog)
+                    .title(writer.getName() + "님의 하루 일지 작성 완료")
+                    .calendarType(CalendarType.DAILY_LOG)
+                    .startTime(request.getLogDate().atTime(request.getStartTime()))
+                    .endTime(request.getLogDate().atTime(request.getEndTime()))
+                    .build());
 
-        return savedLog.getId();
+            return savedLog.getId();
+        } catch (Exception e) {
+            if (imageUrl != null) s3UploadService.delete(imageUrl);
+            throw e;
+        }
     }
 
     public List<DailyLogResponse> getDailyLogs(Long patientId, String userEmail) {

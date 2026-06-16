@@ -81,8 +81,8 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "유효하지 않거나 만료된 리프레시 토큰")
     })
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(@RequestParam String refreshToken) {
-        return ResponseEntity.ok(service.refresh(refreshToken));
+    public ResponseEntity<TokenResponse> refresh(@RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(service.refresh(request.getRefreshToken()));
     }
 
     @Operation(summary = "로그아웃", description = "리프레시 토큰을 삭제합니다.")

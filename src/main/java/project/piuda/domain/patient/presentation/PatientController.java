@@ -104,8 +104,9 @@ public class PatientController {
     @PostMapping("/{patientId}/devices")
     public ResponseEntity<Void> connectDevice(
             @Parameter(description = "환자 ID") @PathVariable Long patientId,
-            @Parameter(description = "디바이스 시리얼 번호") @RequestParam String deviceSerial) {
-        patientService.connectDevice(patientId, deviceSerial);
+            @Parameter(description = "디바이스 시리얼 번호") @RequestParam String deviceSerial,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        patientService.connectDevice(patientId, userDetails.getId(), deviceSerial);
         return ResponseEntity.ok().build();
     }
 
