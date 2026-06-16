@@ -98,6 +98,7 @@ public class UserService {
         return new TokenResponse(accessToken, refreshToken);
     }
 
+    @Transactional
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BusinessException("이메일 또는 비밀번호가 일치하지 않습니다."));
@@ -139,7 +140,6 @@ public class UserService {
         refreshTokenRepository.deleteByUser(user);
     }
 
-    @Transactional
     private String issueRefreshToken(User user) {
         String tokenValue = jwtTokenProvider.createRefreshToken();
         refreshTokenRepository.findByUser(user).ifPresentOrElse(
