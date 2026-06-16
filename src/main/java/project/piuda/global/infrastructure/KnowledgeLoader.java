@@ -68,7 +68,13 @@ public class KnowledgeLoader implements ApplicationRunner {
             return;
         }
 
-        TokenTextSplitter splitter = new TokenTextSplitter();
+        if (reloadOnStartup) {
+            pgVectorJdbcTemplate.execute("TRUNCATE vector_store");
+            log.info("[RAG] 기존 벡터 스토어 초기화 완료");
+        }
+
+        // chunkSize=800, overlap=200 → 청크 경계 부분이 양쪽에 포함되어 검색 누락 방지
+        TokenTextSplitter splitter = new TokenTextSplitter(800, 200, 5, 10000, true);
         List<Document> splitDocs = splitter.apply(allDocuments);
 
         vectorStore.add(splitDocs);

@@ -36,28 +36,39 @@ public class RagChatClient {
     private final ChatModel chatModel;
     private final VectorStore vectorStore;
 
-    public String sendMessage(List<CareAdviceMessage> history, String newUserMessage, String patientContext) {
-        List<Document> relevantDocs = retrieveRelevantDocuments(newUserMessage);
+    public RagResult sendMessage(List<CareAdviceMessage> history, String newUserMessage, String patientContext) {
+        List<Document> relevantDocs = retrieveRelevantDocuments(newUserMessage, history);
 
         String systemPrompt = buildSystemPrompt(patientContext, relevantDocs);
         List<Message> messages = buildMessageList(systemPrompt, history, newUserMessage);
 
-        return chatModel.call(new Prompt(messages))
+        String responseText = chatModel.call(new Prompt(messages))
                 .getResult()
                 .getOutput()
                 .getText();
+
+        return new RagResult(responseText, !relevantDocs.isEmpty());
     }
 
-    private List<Document> retrieveRelevantDocuments(String query) {
+    private List<Document> retrieveRelevantDocuments(String query, List<CareAdviceMessage> history) {
+        // 직전 AI 응답을 질문 앞에 붙여 "그건", "그럼" 같은 지시 표현의 맥락을 보강
+        String enrichedQuery = query;
+        if (!history.isEmpty()) {
+            CareAdviceMessage lastMsg = history.get(history.size() - 1);
+            if (lastMsg.getRole() == MessageRole.ASSISTANT) {
+                enrichedQuery = lastMsg.getContent() + " " + query;
+            }
+        }
+
         try {
             List<Document> docs = vectorStore.similaritySearch(
                     SearchRequest.builder()
-                            .query(query)
+                            .query(enrichedQuery)
                             .topK(TOP_K)
                             .similarityThreshold(SIMILARITY_THRESHOLD)
                             .build()
             );
-            log.debug("[RAG] 검색된 관련 문서: {}개", docs.size());
+            log.debug("[RAG] 검색된 관련 문서: {}개 (맥락 보강 쿼리 사용: {})", docs.size(), enrichedQuery.length() > query.length());
             return docs;
         } catch (Exception e) {
             log.warn("[RAG] 벡터 검색 실패, RAG 없이 응답합니다: {}", e.getMessage());
@@ -97,4 +108,6 @@ public class RagChatClient {
 
         return messages;
     }
+
+    public record RagResult(String content, boolean ragUsed) {}
 }
