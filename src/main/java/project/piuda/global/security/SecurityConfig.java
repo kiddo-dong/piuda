@@ -60,8 +60,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/*", "/api/v1/posts/*/comments").permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/users/onboarding").hasRole("PENDING")
-                        .anyRequest().hasAnyRole("PROTECTOR", "CAREGIVER", "MEDICAL_STAFF")
+                        .anyRequest().hasAnyRole("PROTECTOR", "CAREGIVER", "MEDICAL_STAFF", "ADMIN")
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
                         UsernamePasswordAuthenticationFilter.class);
