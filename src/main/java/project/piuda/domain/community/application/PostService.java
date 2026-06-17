@@ -90,6 +90,9 @@ public class PostService {
     public PostResponse getPost(Long postId, String userEmail) {
         postRepository.incrementViewCount(postId);
         Post post = getPostOrThrow(postId);
+        if (post.isHidden()) {
+            throw new BusinessException("신고로 인해 숨겨진 게시글입니다.");
+        }
         boolean likedByMe = false;
         boolean scrappedByMe = false;
         if (userEmail != null) {

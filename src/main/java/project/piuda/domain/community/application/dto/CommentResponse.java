@@ -14,6 +14,7 @@ public class CommentResponse {
     private final String writerRole;
     private final String content;
     private final boolean adopted;
+    private final boolean hidden;
     private final LocalDateTime createdAt;
     private final List<CommentResponse> replies;
 
@@ -22,7 +23,8 @@ public class CommentResponse {
         this.parentCommentId = comment.getParentComment() != null ? comment.getParentComment().getId() : null;
         this.writerNickname = comment.getWriter().getNickname();
         this.writerRole = comment.getWriter().getRole() != null ? comment.getWriter().getRole().name() : null;
-        this.content = comment.getContent();
+        this.hidden = comment.isHidden();
+        this.content = comment.isHidden() ? "[신고로 인해 숨겨진 댓글입니다]" : comment.getContent();
         this.adopted = comment.isAdopted();
         this.createdAt = comment.getCreatedAt();
         this.replies = replies;

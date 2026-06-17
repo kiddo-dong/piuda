@@ -45,6 +45,9 @@ public class Post {
     private boolean hasAdopted;
 
     @Column(nullable = false)
+    private boolean hidden;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -58,6 +61,7 @@ public class Post {
         this.likeCount = 0;
         this.viewCount = 0;
         this.hasAdopted = false;
+        this.hidden = false;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -86,5 +90,13 @@ public class Post {
 
     public void decreaseLike() {
         if (this.likeCount > 0) this.likeCount--;
+    }
+
+    public void hide() {
+        this.hidden = true;
+    }
+
+    public void unhide() {
+        this.hidden = false;
     }
 }

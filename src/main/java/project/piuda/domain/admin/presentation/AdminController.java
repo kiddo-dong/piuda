@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.admin.application.AdminService;
 import project.piuda.domain.admin.application.dto.*;
+import project.piuda.domain.report.application.dto.AdminReportResponse;
 
 import java.util.List;
 
@@ -77,6 +78,24 @@ public class AdminController {
     public ResponseEntity<Void> deleteDevice(
             @Parameter(description = "삭제할 기기 ID") @PathVariable Long deviceId) {
         adminService.deleteDevice(deviceId);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "신고 목록 조회", description = "처리 대기 중(PENDING)인 신고 목록을 최신순으로 페이징 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    @GetMapping("/reports")
+    public ResponseEntity<Page<AdminReportResponse>> getReports(
+            @Parameter(description = "페이지 번호 (0부터)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(adminService.getReports(page, size));
+    }
+
+    @Operation(summary = "신고 기각", description = "신고를 기각하고 숨김 처리된 게시글/댓글을 복구합니다.")
+    @ApiResponse(responseCode = "200", description = "기각 완료")
+    @PatchMapping("/reports/{reportId}/dismiss")
+    public ResponseEntity<Void> dismissReport(
+            @Parameter(description = "기각할 신고 ID") @PathVariable Long reportId) {
+        adminService.dismissReport(reportId);
         return ResponseEntity.ok().build();
     }
 }

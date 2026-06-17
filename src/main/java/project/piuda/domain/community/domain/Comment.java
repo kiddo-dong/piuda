@@ -36,6 +36,9 @@ public class Comment {
     private boolean isAdopted;
 
     @Column(nullable = false)
+    private boolean hidden;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Builder
@@ -45,6 +48,7 @@ public class Comment {
         this.parentComment = parentComment;
         this.content = content;
         this.isAdopted = false;
+        this.hidden = false;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -58,5 +62,13 @@ public class Comment {
 
     public void cancelAdoption() {
         this.isAdopted = false;
+    }
+
+    public void hide() {
+        this.hidden = true;
+    }
+
+    public void unhide() {
+        this.hidden = false;
     }
 }

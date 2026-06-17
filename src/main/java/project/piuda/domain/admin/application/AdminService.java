@@ -6,12 +6,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.admin.application.dto.*;
+import project.piuda.domain.community.domain.Comment;
+import project.piuda.domain.community.domain.CommentRepository;
 import project.piuda.domain.community.domain.Post;
 import project.piuda.domain.community.domain.PostRepository;
 import project.piuda.domain.device.domain.Device;
 import project.piuda.domain.device.domain.DeviceRepository;
 import project.piuda.domain.patient.domain.Patient;
 import project.piuda.domain.patient.domain.PatientRepository;
+import project.piuda.domain.report.application.dto.AdminReportResponse;
+import project.piuda.domain.report.domain.Report;
+import project.piuda.domain.report.domain.ReportRepository;
+import project.piuda.domain.report.domain.ReportStatus;
+import project.piuda.domain.report.domain.ReportTargetType;
 import project.piuda.domain.user.domain.Role;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
@@ -26,8 +33,10 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final DeviceRepository deviceRepository;
     private final PatientRepository patientRepository;
+    private final ReportRepository reportRepository;
 
     public Page<AdminUserResponse> getUsers(int page, int size) {
         return userRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size))
@@ -83,5 +92,24 @@ public class AdminService {
                 postRepository.count(),
                 deviceRepository.count()
         );
+    }
+
+    public Page<AdminReportResponse> getReports(int page, int size) {
+        return reportRepository.findByStatusOrderByCreatedAtDesc(ReportStatus.PENDING, PageRequest.of(page, size))
+                .map(AdminReportResponse::new);
+    }
+
+    @Transactional
+    public void dismissReport(Long reportId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 신고입니다."));
+
+        if (report.getTargetType() == ReportTargetType.POST) {
+            postRepository.findById(report.getTargetId()).ifPresent(Post::unhide);
+        } else if (report.getTargetType() == ReportTargetType.COMMENT) {
+            commentRepository.findById(report.getTargetId()).ifPresent(Comment::unhide);
+        }
+
+        report.dismiss();
     }
 }
