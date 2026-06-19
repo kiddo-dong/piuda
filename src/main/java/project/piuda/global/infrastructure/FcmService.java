@@ -29,6 +29,7 @@ public class FcmService {
                 app = FirebaseApp.getApps().isEmpty()
                         ? FirebaseApp.initializeApp(options)
                         : FirebaseApp.getInstance();
+                // 실행 시 log
                 log.info("FCM 초기화 완료");
             } catch (Exception e) {
                 log.warn("FCM 초기화 실패 — 푸쉬 알림이 비활성화됩니다.", e);
