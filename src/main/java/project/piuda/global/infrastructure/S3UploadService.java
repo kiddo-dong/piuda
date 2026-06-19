@@ -62,6 +62,13 @@ public class S3UploadService {
         }
     }
 
+    public String uploadFile(MultipartFile multipartFile, String dirName) throws IOException {
+        validateNotEmpty(multipartFile);
+        File uploadFile = convert(multipartFile)
+                .orElseThrow(() -> new BusinessException("파일 변환에 실패했습니다."));
+        return upload(uploadFile, dirName);
+    }
+
     public String uploadAudioBytes(byte[] bytes, String dirName) {
         String fileName = dirName + "/" + UUID.randomUUID() + ".wav";
         ObjectMetadata metadata = new ObjectMetadata();

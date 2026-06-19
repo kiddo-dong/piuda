@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.chat.application.dto.*;
 import project.piuda.domain.chat.domain.*;
 import project.piuda.domain.user.domain.User;
@@ -12,7 +13,9 @@ import project.piuda.global.exception.BusinessException;
 import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
 import project.piuda.global.infrastructure.FcmService;
+import project.piuda.global.infrastructure.S3UploadService;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +28,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final FcmService fcmService;
+    private final S3UploadService s3UploadService;
 
     @Transactional
     public ChatRoomResponse createOrGetRoom(String userEmail, String targetNickname) {
@@ -77,17 +81,45 @@ public class ChatService {
     }
 
     @Transactional
-    public ChatMessageResponse sendMessage(Long roomId, String senderEmail, String content) {
+    public ChatMessageResponse sendMessage(Long roomId, String senderEmail, String content, MessageType messageType) {
         ChatRoom room = getRoom(roomId);
         User sender = getUser(senderEmail);
         validateMember(room, sender);
 
+        MessageType type = messageType != null ? messageType : MessageType.TEXT;
         ChatMessage message = chatMessageRepository.save(
-                ChatMessage.builder().chatRoom(room).sender(sender).content(content).build());
-        room.updateLastMessage(content);
+                ChatMessage.builder().chatRoom(room).sender(sender)
+                        .messageType(type).content(content).build());
+        room.updateLastMessage(type == MessageType.TEXT ? content : "[" + type.name().toLowerCase() + "]");
 
         User recipient = room.getOtherUser(sender);
-        fcmService.send(recipient.getFcmToken(), sender.getNickname(), content);
+        fcmService.send(recipient.getFcmToken(), sender.getNickname(),
+                type == MessageType.TEXT ? content : "사진/파일을 보냈습니다.");
+
+        return new ChatMessageResponse(message, sender);
+    }
+
+    @Transactional
+    public ChatMessageResponse sendFile(Long roomId, String senderEmail, MultipartFile file) throws IOException {
+        ChatRoom room = getRoom(roomId);
+        User sender = getUser(senderEmail);
+        validateMember(room, sender);
+
+        String contentType = file.getContentType();
+        MessageType type = (contentType != null && contentType.startsWith("image/"))
+                ? MessageType.IMAGE : MessageType.FILE;
+
+        String folder = type == MessageType.IMAGE ? "chat/images" : "chat/files";
+        String fileUrl = s3UploadService.uploadFile(file, folder);
+        String originalName = file.getOriginalFilename();
+
+        ChatMessage message = chatMessageRepository.save(
+                ChatMessage.builder().chatRoom(room).sender(sender)
+                        .messageType(type).content(fileUrl).fileName(originalName).build());
+        room.updateLastMessage(type == MessageType.IMAGE ? "[이미지]" : "[파일] " + originalName);
+
+        User recipient = room.getOtherUser(sender);
+        fcmService.send(recipient.getFcmToken(), sender.getNickname(), "사진/파일을 보냈습니다.");
 
         return new ChatMessageResponse(message, sender);
     }

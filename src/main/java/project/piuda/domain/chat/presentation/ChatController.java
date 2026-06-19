@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.chat.application.ChatService;
 import project.piuda.domain.chat.application.dto.*;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +57,20 @@ public class ChatController {
             @Parameter(description = "이전 페이지의 마지막 메시지 ID") @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "30") int size) {
         return ResponseEntity.ok(chatService.getMessages(roomId, userDetails.getUsername(), cursor, size));
+    }
+
+    @Operation(summary = "이미지/파일 전송",
+            description = "이미지(IMAGE) 또는 파일(FILE)을 S3에 업로드하고 채팅 메시지로 저장합니다. " +
+                          "저장 후 /topic/chat/{roomId}로 브로드캐스트됩니다.")
+    @ApiResponse(responseCode = "200", description = "전송 성공")
+    @PostMapping(value = "/{roomId}/files", consumes = "multipart/form-data")
+    public ResponseEntity<ChatMessageResponse> sendFile(
+            @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestPart("file") MultipartFile file) throws IOException {
+        ChatMessageResponse response = chatService.sendFile(roomId, userDetails.getUsername(), file);
+        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "읽음 처리",

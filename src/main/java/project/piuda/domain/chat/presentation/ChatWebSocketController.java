@@ -27,7 +27,7 @@ public class ChatWebSocketController {
     public void sendMessage(@DestinationVariable Long roomId,
                             @Payload SendMessageRequest request,
                             Principal principal) {
-        ChatMessageResponse response = chatService.sendMessage(roomId, principal.getName(), request.getContent());
+        ChatMessageResponse response = chatService.sendMessage(roomId, principal.getName(), request.getContent(), request.getMessageType());
         messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
     }
 }
