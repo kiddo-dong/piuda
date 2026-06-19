@@ -35,3 +35,6 @@ build/
 ### Knowledge Base (large binary files) ###
 src/main/resources/knowledge/*.pdf
 src/main/resources/knowledge/*.json
+
+### Firebase Service Account (보안 키, 절대 커밋 금지) ###
+*firebase-adminsdk*.json
