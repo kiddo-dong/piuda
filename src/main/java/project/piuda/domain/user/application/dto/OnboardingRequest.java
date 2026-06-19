@@ -2,6 +2,7 @@ package project.piuda.domain.user.application.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Getter;
+import project.piuda.domain.user.domain.CaregiverType;
 import project.piuda.domain.user.domain.Gender;
 import project.piuda.domain.user.domain.Role;
 
@@ -27,4 +28,5 @@ public class OnboardingRequest {
 
     private Gender gender;
     private LocalDate birthDate;
+    private CaregiverType caregiverType;
 }

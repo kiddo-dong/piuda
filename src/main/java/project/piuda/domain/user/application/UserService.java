@@ -97,6 +97,7 @@ public class UserService {
                         .experienceYears(request.getExperienceYears() != null ? request.getExperienceYears() : 0)
                         .gender(request.getGender())
                         .birthDate(request.getBirthDate())
+                        .caregiverType(request.getCaregiverType())
                         .build();
                 caregiverProfileRepository.save(profile);
             }
@@ -123,6 +124,7 @@ public class UserService {
                     .experienceYears(request.getExperienceYears() != null ? request.getExperienceYears() : 0)
                     .gender(request.getGender())
                     .birthDate(request.getBirthDate())
+                    .caregiverType(request.getCaregiverType())
                     .build();
             caregiverProfileRepository.save(profile);
         }
@@ -222,7 +224,7 @@ public class UserService {
         if (user.getRole() == Role.CAREGIVER) {
             CaregiverProfile profile = caregiverProfileRepository.findById(user.getId())
                     .orElseThrow(() -> new NotFoundException("간병인 프로필을 찾을 수 없습니다."));
-            profile.update(request.getGender(), request.getBirthDate(), request.getExperienceYears());
+            profile.update(request.getGender(), request.getBirthDate(), request.getExperienceYears(), request.getCaregiverType());
         }
     }
 

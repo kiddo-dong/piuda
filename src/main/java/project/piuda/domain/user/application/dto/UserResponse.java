@@ -20,6 +20,7 @@ public class UserResponse {
     private final String gender;
     private final LocalDate birthDate;
     private final Integer experienceYears;
+    private final String caregiverType;
 
     public UserResponse(User user, CaregiverProfile profile) {
         this.userId = user.getId();
@@ -34,5 +35,6 @@ public class UserResponse {
         this.gender = profile != null && profile.getGender() != null ? profile.getGender().name() : null;
         this.birthDate = profile != null ? profile.getBirthDate() : null;
         this.experienceYears = profile != null ? profile.getExperienceYears() : null;
+        this.caregiverType = profile != null && profile.getCaregiverType() != null ? profile.getCaregiverType().name() : null;
     }
 }

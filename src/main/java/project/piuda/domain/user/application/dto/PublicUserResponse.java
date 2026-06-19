@@ -14,6 +14,7 @@ public class PublicUserResponse {
     private final String role;
     private final String introduction;
     private final Integer experienceYears;
+    private final String caregiverType;
     private final int score;
     private final LocalDate joinedAt;
 
@@ -24,6 +25,8 @@ public class PublicUserResponse {
         this.introduction = user.getIntroduction();
         this.experienceYears = (user.getRole() == Role.CAREGIVER && caregiverProfile != null)
                 ? caregiverProfile.getExperienceYears() : null;
+        this.caregiverType = (user.getRole() == Role.CAREGIVER && caregiverProfile != null && caregiverProfile.getCaregiverType() != null)
+                ? caregiverProfile.getCaregiverType().name() : null;
         this.score = user.getScore();
         this.joinedAt = user.getCreatedAt().toLocalDate();
     }

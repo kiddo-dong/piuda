@@ -27,18 +27,23 @@ public class CaregiverProfile {
 
     private LocalDate birthDate;
 
+    @Enumerated(EnumType.STRING)
+    private CaregiverType caregiverType;
+
     @Builder
-    public CaregiverProfile(User user, int experienceYears, Gender gender, LocalDate birthDate) {
+    public CaregiverProfile(User user, int experienceYears, Gender gender, LocalDate birthDate, CaregiverType caregiverType) {
         this.user = user;
         this.experienceYears = experienceYears;
         this.gender = gender;
         this.birthDate = birthDate;
+        this.caregiverType = caregiverType;
     }
 
-    public void update(Gender gender, LocalDate birthDate, Integer experienceYears) {
+    public void update(Gender gender, LocalDate birthDate, Integer experienceYears, CaregiverType caregiverType) {
         if (gender != null) this.gender = gender;
         if (birthDate != null) this.birthDate = birthDate;
         if (experienceYears != null) this.experienceYears = experienceYears;
+        if (caregiverType != null) this.caregiverType = caregiverType;
     }
 
     public void addScore(int score) {

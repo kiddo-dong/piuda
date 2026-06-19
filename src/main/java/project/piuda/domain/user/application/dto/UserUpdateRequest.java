@@ -2,6 +2,7 @@ package project.piuda.domain.user.application.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import project.piuda.domain.user.domain.CaregiverType;
 import project.piuda.domain.user.domain.Gender;
 
 import java.time.LocalDate;
@@ -18,4 +19,5 @@ public class UserUpdateRequest {
     private Gender gender;
     private LocalDate birthDate;
     private Integer experienceYears;
+    private CaregiverType caregiverType;
 }
