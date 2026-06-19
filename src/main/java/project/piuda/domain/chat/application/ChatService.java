@@ -2,6 +2,7 @@ package project.piuda.domain.chat.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +30,7 @@ public class ChatService {
     private final UserRepository userRepository;
     private final FcmService fcmService;
     private final S3UploadService s3UploadService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public ChatRoomResponse createOrGetRoom(String userEmail, String targetNickname) {
@@ -90,11 +92,11 @@ public class ChatService {
         ChatMessage message = chatMessageRepository.save(
                 ChatMessage.builder().chatRoom(room).sender(sender)
                         .messageType(type).content(content).build());
+        String preview = type == MessageType.TEXT ? content : "사진/파일을 보냈습니다.";
         room.updateLastMessage(type == MessageType.TEXT ? content : "[" + type.name().toLowerCase() + "]");
 
         User recipient = room.getOtherUser(sender);
-        fcmService.send(recipient.getFcmToken(), sender.getNickname(),
-                type == MessageType.TEXT ? content : "사진/파일을 보냈습니다.");
+        sendNotification(room, sender, recipient, preview);
 
         return new ChatMessageResponse(message, sender);
     }
@@ -123,7 +125,7 @@ public class ChatService {
         }
 
         User recipient = room.getOtherUser(sender);
-        fcmService.send(recipient.getFcmToken(), sender.getNickname(), "사진/파일을 보냈습니다.");
+        sendNotification(room, sender, recipient, "사진/파일을 보냈습니다.");
 
         return responses;
     }
@@ -134,6 +136,15 @@ public class ChatService {
         User me = getUser(userEmail);
         validateMember(room, me);
         chatMessageRepository.markAllAsRead(room, me);
+    }
+
+    private void sendNotification(ChatRoom room, User sender, User recipient, String preview) {
+        long unreadCount = chatMessageRepository.countByChatRoomAndSenderNotAndIsReadFalse(room, recipient);
+        messagingTemplate.convertAndSendToUser(
+                recipient.getEmail(),
+                "/queue/notifications",
+                new ChatNotificationResponse(room.getId(), sender.getNickname(), preview, unreadCount));
+        fcmService.send(recipient.getFcmToken(), sender.getNickname(), preview);
     }
 
     private void validateMember(ChatRoom room, User user) {
