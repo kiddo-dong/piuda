@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public class PostResponse {
     private final Long postId;
     private final String writerNickname;
+    private final String writerProfileImageUrl;
     private final String writerRole;
     private final String title;
     private final String content;
@@ -29,6 +30,7 @@ public class PostResponse {
     public PostResponse(Post post, boolean likedByMe, boolean scrappedByMe) {
         this.postId = post.getId();
         this.writerNickname = post.getWriter().getNickname();
+        this.writerProfileImageUrl = post.getWriter().getProfileImageUrl();
         this.writerRole = post.getWriter().getRole() != null ? post.getWriter().getRole().name() : null;
         this.title = post.getTitle();
         this.content = post.getContent();

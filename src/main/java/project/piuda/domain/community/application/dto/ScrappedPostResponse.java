@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 public class ScrappedPostResponse {
     private final Long postId;
     private final String writerNickname;
+    private final String writerProfileImageUrl;
     private final String writerRole;
     private final String title;
     private final String content;
@@ -30,6 +31,7 @@ public class ScrappedPostResponse {
     public ScrappedPostResponse(Post post, boolean likedByMe, LocalDateTime scrappedAt) {
         this.postId = post.getId();
         this.writerNickname = post.getWriter().getNickname();
+        this.writerProfileImageUrl = post.getWriter().getProfileImageUrl();
         this.writerRole = post.getWriter().getRole() != null ? post.getWriter().getRole().name() : null;
         this.title = post.getTitle();
         this.content = post.getContent();
