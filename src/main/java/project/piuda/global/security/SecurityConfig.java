@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/devices", "/api/v1/devices/*/voice", "/api/v1/devices/*/tts/next", "/api/v1/devices/*/tts/*/ack").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/*", "/api/v1/posts/*/comments").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/users/onboarding").hasRole("PENDING")

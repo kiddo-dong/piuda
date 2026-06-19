@@ -168,6 +168,19 @@
 			<artifactId>postgresql</artifactId>
 		</dependency>
 
+		<!-- WebSocket + STOMP -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+
+		<!-- Firebase Admin SDK (FCM 푸쉬 알림) -->
+		<dependency>
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>9.4.1</version>
+		</dependency>
+
 		<!-- Swagger (springdoc-openapi) -->
 		<dependency>
 			<groupId>org.springdoc</groupId>

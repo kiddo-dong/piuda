@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.user.application.UserService;
 import project.piuda.domain.user.application.dto.*;
+import project.piuda.domain.user.application.dto.FcmTokenRequest;
 import project.piuda.domain.user.application.dto.PublicUserResponse;
 
 import java.io.IOException;
@@ -133,6 +134,16 @@ public class UserController {
     public ResponseEntity<List<RankingResponse>> getRanking(
             @Parameter(description = "조회할 상위 인원 수 (기본값 10)") @RequestParam(defaultValue = "10") int limit) {
         return ResponseEntity.ok(service.getRanking(limit));
+    }
+
+    @Operation(summary = "FCM 토큰 등록/갱신", description = "앱 시작 시 FCM 디바이스 토큰을 서버에 등록합니다. 푸쉬 알림 수신에 필요합니다.")
+    @ApiResponse(responseCode = "200", description = "등록 성공")
+    @PutMapping("/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody FcmTokenRequest request) {
+        service.updateFcmToken(userDetails.getUsername(), request.getFcmToken());
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "공개 프로필 조회", description = "닉네임으로 다른 사용자의 공개 프로필을 조회합니다. 인증 필요.")

@@ -56,6 +56,9 @@ public class User {
     @Column(nullable = false)
     private boolean onboardingDone;
 
+    @Column(length = 512)
+    private String fcmToken;
+
     @Builder
     public User(String email, String password, String name, String nickname, String phone,
                 String profileImageUrl, String introduction, Role role) {
@@ -100,6 +103,10 @@ public class User {
         this.role = role;
         if (phone != null && !phone.isBlank()) this.phone = phone;
         this.onboardingDone = true;
+    }
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 
     public void update(String name, String nickname, String phone, String profileImageUrl,

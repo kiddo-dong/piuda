@@ -209,6 +209,13 @@ public class UserService {
         userRepository.delete(user);
     }
 
+    @Transactional
+    public void updateFcmToken(String email, String fcmToken) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        user.updateFcmToken(fcmToken);
+    }
+
     public PublicUserResponse getUserProfile(String nickname) {
         User user = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
