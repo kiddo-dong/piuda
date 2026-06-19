@@ -27,16 +27,13 @@ public class PatientMemoryService {
 
     public PatientMemoryResponse getPatientMemory(Long patientId, String userEmail) {
         validateAccess(patientId, userEmail);
-        PatientMemory patientMemory = patientMemoryRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new NotFoundException("해당 환자의 정보가 존재하지 않습니다."));
-        return new PatientMemoryResponse(patientMemory);
+        return new PatientMemoryResponse(findPatientMemory(patientId));
     }
 
     @Transactional
     public void updatePatientMemory(Long patientId, String userEmail, PatientMemoryRequest request) {
         validateAccess(patientId, userEmail);
-        PatientMemory patientMemory = patientMemoryRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new NotFoundException("해당 환자의 정보가 존재하지 않습니다."));
+        PatientMemory patientMemory = findPatientMemory(patientId);
 
         patientMemory.updateContent(
                 request.getBloodType(),
@@ -58,6 +55,11 @@ public class PatientMemoryService {
                 request.getPreferredHospital(),
                 request.getSpecialNotes()
         );
+    }
+
+    private PatientMemory findPatientMemory(Long patientId) {
+        return patientMemoryRepository.findByPatientId(patientId)
+                .orElseThrow(() -> new NotFoundException("해당 환자의 정보가 존재하지 않습니다."));
     }
 
     private void validateAccess(Long patientId, String userEmail) {

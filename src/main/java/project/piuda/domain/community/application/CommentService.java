@@ -31,14 +31,12 @@ public class CommentService {
 
     @Transactional
     public Long createComment(Long postId, String userEmail, CommentRequest request) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 게시글입니다."));
+        Post post = getPost(postId);
         User writer = getUser(userEmail);
 
         Comment parentComment = null;
         if (request.getParentCommentId() != null) {
-            parentComment = commentRepository.findById(request.getParentCommentId())
-                    .orElseThrow(() -> new NotFoundException("존재하지 않는 댓글입니다."));
+            parentComment = getComment(request.getParentCommentId());
             if (!parentComment.getPost().getId().equals(postId)) {
                 throw new BusinessException("해당 게시글의 댓글이 아닙니다.");
             }
@@ -76,8 +74,7 @@ public class CommentService {
 
     @Transactional
     public void updateComment(Long commentId, String userEmail, CommentRequest request) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 댓글입니다."));
+        Comment comment = getComment(commentId);
         User user = getUser(userEmail);
 
         if (!comment.getWriter().getId().equals(user.getId())) {
@@ -91,8 +88,7 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(Long commentId, String userEmail) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 댓글입니다."));
+        Comment comment = getComment(commentId);
         User user = getUser(userEmail);
 
         if (!comment.getWriter().getId().equals(user.getId())) {
@@ -104,8 +100,7 @@ public class CommentService {
     @Transactional
     @CacheEvict(value = "ranking", allEntries = true)
     public void adoptComment(Long postId, Long commentId, String userEmail) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 게시글입니다."));
+        Post post = getPost(postId);
         User requester = getUser(userEmail);
 
         if (!post.getWriter().getId().equals(requester.getId())) {
@@ -115,8 +110,7 @@ public class CommentService {
             throw new BusinessException("이미 채택된 게시글입니다.");
         }
 
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 댓글입니다."));
+        Comment comment = getComment(commentId);
 
         if (!comment.getPost().getId().equals(postId)) {
             throw new BusinessException("해당 게시글의 댓글이 아닙니다.");
@@ -136,16 +130,14 @@ public class CommentService {
     @Transactional
     @CacheEvict(value = "ranking", allEntries = true)
     public void cancelAdoption(Long postId, Long commentId, String userEmail) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 게시글입니다."));
+        Post post = getPost(postId);
         User requester = getUser(userEmail);
 
         if (!post.getWriter().getId().equals(requester.getId())) {
             throw new ForbiddenException("게시글 작성자만 채택을 취소할 수 있습니다.");
         }
 
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 댓글입니다."));
+        Comment comment = getComment(commentId);
 
         if (!comment.isAdopted()) {
             throw new BusinessException("채택된 댓글이 아닙니다.");
@@ -159,5 +151,15 @@ public class CommentService {
     private User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+    }
+
+    private Post getPost(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 게시글입니다."));
+    }
+
+    private Comment getComment(Long commentId) {
+        return commentRepository.findById(commentId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 댓글입니다."));
     }
 }

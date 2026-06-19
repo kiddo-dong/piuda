@@ -31,8 +31,7 @@ public class CareCalendarService {
     public Long createSchedule(Long patientId, String userEmail, CareCalendarRequest request) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-        User writer = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        User writer = getUser(userEmail);
 
         User assignee = null;
         if (request.getAssigneeId() != null) {
@@ -63,10 +62,8 @@ public class CareCalendarService {
 
     @Transactional
     public void updateSchedule(Long calendarId, String userEmail, CareCalendarRequest request) {
-        CareCalendar calendar = careCalendarRepository.findById(calendarId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 일정입니다."));
-        User requester = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        CareCalendar calendar = getCalendar(calendarId);
+        User requester = getUser(userEmail);
 
         if (!calendar.getWriter().getId().equals(requester.getId())) {
             throw new ForbiddenException("본인이 작성한 일정만 수정할 수 있습니다.");
@@ -90,15 +87,23 @@ public class CareCalendarService {
 
     @Transactional
     public void deleteCalendarEvent(Long calendarId, String userEmail) {
-        CareCalendar calendar = careCalendarRepository.findById(calendarId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 일정입니다."));
-        User requester = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        CareCalendar calendar = getCalendar(calendarId);
+        User requester = getUser(userEmail);
 
         if (!calendar.getWriter().getId().equals(requester.getId())) {
             throw new ForbiddenException("본인이 작성한 일정만 삭제할 수 있습니다.");
         }
 
         careCalendarRepository.delete(calendar);
+    }
+
+    private User getUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+    }
+
+    private CareCalendar getCalendar(Long calendarId) {
+        return careCalendarRepository.findById(calendarId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 일정입니다."));
     }
 }

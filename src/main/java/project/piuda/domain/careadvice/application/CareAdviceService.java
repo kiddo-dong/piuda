@@ -43,14 +43,9 @@ public class CareAdviceService {
 
     @Transactional
     public CareAdviceSessionResponse createSession(Long patientId, String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-
-        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
-            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
-        }
+        User user = getUser(userEmail);
+        Patient patient = getPatient(patientId);
+        validatePatientAccess(patient, user);
 
         return new CareAdviceSessionResponse(sessionRepository.save(
                 CareAdviceSession.builder().user(user).patient(patient).build()
@@ -59,14 +54,9 @@ public class CareAdviceService {
 
     @Transactional
     public SendCareAdviceResponse sendMessage(Long sessionId, String userEmail, CareAdviceMessageRequest request) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-        CareAdviceSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 세션입니다."));
-
-        if (!session.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("본인의 세션에만 접근할 수 있습니다.");
-        }
+        User user = getUser(userEmail);
+        CareAdviceSession session = getSession(sessionId);
+        validateSessionOwner(session, user);
 
         List<CareAdviceMessage> recentHistory = messageRepository.findRecentMessages(
                 sessionId, PageRequest.of(0, CONTEXT_MESSAGE_LIMIT)
@@ -101,26 +91,16 @@ public class CareAdviceService {
 
     @Transactional
     public void deleteSession(Long sessionId, String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-        CareAdviceSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 세션입니다."));
-
-        if (!session.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("본인의 세션만 삭제할 수 있습니다.");
-        }
+        User user = getUser(userEmail);
+        CareAdviceSession session = getSession(sessionId);
+        validateSessionOwner(session, user);
         sessionRepository.delete(session);
     }
 
     public List<CareAdviceSessionResponse> getSessions(Long patientId, String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-
-        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
-            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
-        }
+        User user = getUser(userEmail);
+        Patient patient = getPatient(patientId);
+        validatePatientAccess(patient, user);
 
         return sessionRepository.findByUserIdAndPatientIdOrderByCreatedAtDesc(user.getId(), patientId)
                 .stream()
@@ -129,14 +109,9 @@ public class CareAdviceService {
     }
 
     public List<CareAdviceMessageResponse> getMessages(Long sessionId, String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-        CareAdviceSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 세션입니다."));
-
-        if (!session.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("본인의 세션에만 접근할 수 있습니다.");
-        }
+        User user = getUser(userEmail);
+        CareAdviceSession session = getSession(sessionId);
+        validateSessionOwner(session, user);
 
         return messageRepository.findBySessionIdOrderByCreatedAtAsc(sessionId)
                 .stream()
@@ -156,6 +131,33 @@ public class CareAdviceService {
         }
     }
 
+    private User getUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+    }
+
+    private Patient getPatient(Long patientId) {
+        return patientRepository.findById(patientId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+    }
+
+    private CareAdviceSession getSession(Long sessionId) {
+        return sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 세션입니다."));
+    }
+
+    private void validateSessionOwner(CareAdviceSession session, User user) {
+        if (!session.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException("본인의 세션에만 접근할 수 있습니다.");
+        }
+    }
+
+    private void validatePatientAccess(Patient patient, User user) {
+        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
+            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
+        }
+    }
+
     private String buildPatientContext(Patient patient, String question) {
         StringBuilder sb = new StringBuilder();
         sb.append("현재 돌보는 환자 정보:\n");
@@ -165,7 +167,6 @@ public class CareAdviceService {
         if (patient.getDementiaStage() != null) sb.append("- 치매 단계: ").append(patient.getDementiaStage()).append("\n");
 
         patientMemoryRepository.findByPatientId(patient.getId()).ifPresent(memory -> {
-            // 핵심 의료 정보는 질문 내용과 무관하게 항상 포함
             appendIfPresent(sb, "치매 유형", memory.getDementiaType());
             appendIfPresent(sb, "복용 약물", memory.getMedicationInfo());
             appendIfPresent(sb, "금기 사항", memory.getContraindications());
@@ -174,7 +175,6 @@ public class CareAdviceService {
             appendIfPresent(sb, "장기요양 등급", memory.getLongTermCareGrade() > 0
                     ? String.valueOf(memory.getLongTermCareGrade()) : null);
 
-            // 질문 키워드에 따라 관련 정보만 선택적으로 포함
             if (containsAny(question, "좋아", "취향", "선호", "음식", "음악", "활동")) {
                 appendIfPresent(sb, "좋아하는 것", memory.getLikes());
             }

@@ -38,26 +38,17 @@ public class PatientService {
 
     @Transactional
     public void disconnectDevice(Long patientId, Long userId) {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-
-        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
-            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
-        }
+        Patient patient = getPatient(patientId);
+        User user = getUserById(userId);
+        validatePatientAccess(patient, user);
         patient.removeDevice();
     }
 
     @Transactional
     public void connectDevice(Long patientId, Long userId, String deviceSerial) {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
-            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
-        }
+        Patient patient = getPatient(patientId);
+        User user = getUserById(userId);
+        validatePatientAccess(patient, user);
         Device device = deviceRepository.findByDeviceSerial(deviceSerial)
                 .orElseThrow(() -> new NotFoundException("등록되지 않은 디바이스 시리얼입니다."));
         patient.assignDevice(device);
@@ -65,8 +56,7 @@ public class PatientService {
 
     @Transactional
     public PatientResponse registerPatient(PatientCreateRequest request, Long protectorId) {
-        User protector = userRepository.findById(protectorId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 회원입니다."));
+        User protector = getUserById(protectorId);
 
         Patient patient = Patient.builder()
                 .name(request.getName())
@@ -89,8 +79,7 @@ public class PatientService {
 
     @Transactional
     public PatientResponse joinPatient(PatientJoinRequest request, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 회원입니다."));
+        User user = getUserById(userId);
 
         Patient patient = patientRepository.findByInviteCode(request.getInviteCode())
                 .orElseThrow(() -> new NotFoundException("유효하지 않은 초대코드입니다."));
@@ -115,43 +104,41 @@ public class PatientService {
 
     @Transactional
     public PatientResponse updatePatient(Long patientId, Long userId, PatientUpdateRequest request) {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-
-        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
-            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
-        }
-
+        Patient patient = getPatient(patientId);
+        User user = getUserById(userId);
+        validatePatientAccess(patient, user);
         patient.update(request.getName(), request.getBirthDate(), request.getGender(), request.getDementiaStage());
         return patientMapper.toResponseDto(patient);
     }
 
     @Transactional
     public void deletePatient(Long patientId, Long userId) {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-
-        if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
-            throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
-        }
-
+        Patient patient = getPatient(patientId);
+        User user = getUserById(userId);
+        validatePatientAccess(patient, user);
         patientRepository.delete(patient);
     }
 
     public PatientResponse getPatientDetails(Long patientId, Long userId) {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        Patient patient = getPatient(patientId);
+        User user = getUserById(userId);
+        validatePatientAccess(patient, user);
+        return patientMapper.toResponseDto(patient);
+    }
 
+    private Patient getPatient(Long patientId) {
+        return patientRepository.findById(patientId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+    }
+
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+    }
+
+    private void validatePatientAccess(Patient patient, User user) {
         if (!patientMemberRepository.existsByPatientAndUser(patient, user)) {
             throw new ForbiddenException("해당 환자에 대한 접근 권한이 없습니다.");
         }
-
-        return patientMapper.toResponseDto(patient);
     }
 }

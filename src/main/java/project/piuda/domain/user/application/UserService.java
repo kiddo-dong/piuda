@@ -112,8 +112,7 @@ public class UserService {
 
     @Transactional
     public TokenResponse completeOnboarding(String email, OnboardingRequest request) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        User user = getUser(email);
         if (userRepository.existsByNickname(request.getNickname())) {
             throw new ConflictException("이미 사용 중인 닉네임입니다.");
         }
@@ -170,8 +169,7 @@ public class UserService {
 
     @Transactional
     public void logout(String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        User user = getUser(userEmail);
         refreshTokenRepository.deleteByUser(user);
     }
 
@@ -189,8 +187,7 @@ public class UserService {
     }
 
     public UserResponse getMe(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        User user = getUser(email);
         CaregiverProfile profile = user.getRole() == Role.CAREGIVER
                 ? caregiverProfileRepository.findById(user.getId()).orElse(null) : null;
         return new UserResponse(user, profile);
@@ -198,8 +195,7 @@ public class UserService {
 
     @Transactional
     public void updateMe(String email, UserUpdateRequest request, MultipartFile image) throws IOException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        User user = getUser(email);
         if (request.getNickname() != null && !request.getNickname().isBlank()
                 && !request.getNickname().equals(user.getNickname())
                 && userRepository.existsByNickname(request.getNickname())) {
@@ -232,8 +228,7 @@ public class UserService {
 
     @Transactional
     public void deleteMe(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        User user = getUser(email);
 
         // 리프레시 토큰
         refreshTokenRepository.deleteByUser(user);
@@ -300,17 +295,25 @@ public class UserService {
 
     @Transactional
     public void updateFcmToken(String email, String fcmToken) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        User user = getUser(email);
         user.updateFcmToken(fcmToken);
     }
 
     public PublicUserResponse getUserProfile(String nickname) {
-        User user = userRepository.findByNickname(nickname)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        User user = getUserByNickname(nickname);
         CaregiverProfile profile = (user.getRole() == Role.CAREGIVER)
                 ? caregiverProfileRepository.findByUser(user).orElse(null) : null;
         return new PublicUserResponse(user, profile);
+    }
+
+    private User getUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+    }
+
+    private User getUserByNickname(String nickname) {
+        return userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
     }
 
     @Cacheable(value = "ranking", key = "#limit")

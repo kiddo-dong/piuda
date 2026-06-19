@@ -39,8 +39,7 @@ public class DailyLogService {
 
     @Transactional
     public Long createDailyLog(Long patientId, String userEmail, DailyLogCreateRequest request, MultipartFile image) throws IOException {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+        Patient patient = getPatient(patientId);
         User writer = getUser(userEmail);
 
         validatePatientAccess(patient, writer);
@@ -101,8 +100,7 @@ public class DailyLogService {
     }
 
     public List<DailyLogResponse> getDailyLogs(Long patientId, String userEmail) {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+        Patient patient = getPatient(patientId);
         User user = getUser(userEmail);
         validatePatientAccess(patient, user);
         return dailyLogRepository.findByPatientIdOrderByLogDateDesc(patientId).stream()
@@ -111,8 +109,7 @@ public class DailyLogService {
     }
 
     public DailyLogResponse getDailyLogDetails(Long logId, String userEmail) {
-        DailyLog log = dailyLogRepository.findById(logId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 일지입니다."));
+        DailyLog log = getDailyLog(logId);
         User user = getUser(userEmail);
         validatePatientAccess(log.getPatient(), user);
         return new DailyLogResponse(log);
@@ -120,8 +117,7 @@ public class DailyLogService {
 
     @Transactional
     public void updateDailyLog(Long logId, String userEmail, DailyLogUpdateRequest request, MultipartFile image) throws IOException {
-        DailyLog log = dailyLogRepository.findById(logId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 일지입니다."));
+        DailyLog log = getDailyLog(logId);
         User writer = getUser(userEmail);
 
         validatePatientAccess(log.getPatient(), writer);
@@ -151,8 +147,7 @@ public class DailyLogService {
 
     @Transactional
     public void deleteDailyLog(Long logId, String userEmail) {
-        DailyLog log = dailyLogRepository.findById(logId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 일지입니다."));
+        DailyLog log = getDailyLog(logId);
         User user = getUser(userEmail);
         validatePatientAccess(log.getPatient(), user);
         validateWriter(log, user);
@@ -163,6 +158,16 @@ public class DailyLogService {
     private User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+    }
+
+    private Patient getPatient(Long patientId) {
+        return patientRepository.findById(patientId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 환자입니다."));
+    }
+
+    private DailyLog getDailyLog(Long logId) {
+        return dailyLogRepository.findById(logId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 일지입니다."));
     }
 
     private void validatePatientAccess(Patient patient, User user) {
