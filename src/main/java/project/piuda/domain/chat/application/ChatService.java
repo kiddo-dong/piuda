@@ -100,28 +100,32 @@ public class ChatService {
     }
 
     @Transactional
-    public ChatMessageResponse sendFile(Long roomId, String senderEmail, MultipartFile file) throws IOException {
+    public List<ChatMessageResponse> sendFiles(Long roomId, String senderEmail, List<MultipartFile> files) throws IOException {
         ChatRoom room = getRoom(roomId);
         User sender = getUser(senderEmail);
         validateMember(room, sender);
 
-        String contentType = file.getContentType();
-        MessageType type = (contentType != null && contentType.startsWith("image/"))
-                ? MessageType.IMAGE : MessageType.FILE;
+        List<ChatMessageResponse> responses = new java.util.ArrayList<>();
+        for (MultipartFile file : files) {
+            String contentType = file.getContentType();
+            MessageType type = (contentType != null && contentType.startsWith("image/"))
+                    ? MessageType.IMAGE : MessageType.FILE;
 
-        String folder = type == MessageType.IMAGE ? "chat/images" : "chat/files";
-        String fileUrl = s3UploadService.uploadFile(file, folder);
-        String originalName = file.getOriginalFilename();
+            String folder = type == MessageType.IMAGE ? "chat/images" : "chat/files";
+            String fileUrl = s3UploadService.uploadFile(file, folder);
+            String originalName = file.getOriginalFilename();
 
-        ChatMessage message = chatMessageRepository.save(
-                ChatMessage.builder().chatRoom(room).sender(sender)
-                        .messageType(type).content(fileUrl).fileName(originalName).build());
-        room.updateLastMessage(type == MessageType.IMAGE ? "[이미지]" : "[파일] " + originalName);
+            ChatMessage message = chatMessageRepository.save(
+                    ChatMessage.builder().chatRoom(room).sender(sender)
+                            .messageType(type).content(fileUrl).fileName(originalName).build());
+            room.updateLastMessage(type == MessageType.IMAGE ? "[이미지]" : "[파일] " + originalName);
+            responses.add(new ChatMessageResponse(message, sender));
+        }
 
         User recipient = room.getOtherUser(sender);
         fcmService.send(recipient.getFcmToken(), sender.getNickname(), "사진/파일을 보냈습니다.");
 
-        return new ChatMessageResponse(message, sender);
+        return responses;
     }
 
     @Transactional

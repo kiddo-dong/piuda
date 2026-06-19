@@ -64,13 +64,13 @@ public class ChatController {
                           "저장 후 /topic/chat/{roomId}로 브로드캐스트됩니다.")
     @ApiResponse(responseCode = "200", description = "전송 성공")
     @PostMapping(value = "/{roomId}/files", consumes = "multipart/form-data")
-    public ResponseEntity<ChatMessageResponse> sendFile(
+    public ResponseEntity<List<ChatMessageResponse>> sendFiles(
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestPart("file") MultipartFile file) throws IOException {
-        ChatMessageResponse response = chatService.sendFile(roomId, userDetails.getUsername(), file);
-        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
-        return ResponseEntity.ok(response);
+            @RequestPart("files") List<MultipartFile> files) throws IOException {
+        List<ChatMessageResponse> responses = chatService.sendFiles(roomId, userDetails.getUsername(), files);
+        responses.forEach(r -> messagingTemplate.convertAndSend("/topic/chat/" + roomId, r));
+        return ResponseEntity.ok(responses);
     }
 
     @Operation(summary = "읽음 처리",
