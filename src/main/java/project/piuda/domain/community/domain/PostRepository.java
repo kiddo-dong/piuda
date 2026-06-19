@@ -4,10 +4,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import project.piuda.domain.user.domain.User;
 
 import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
+
+    List<Post> findAllByWriter(User writer);
 
     @Query("SELECT p FROM Post p WHERE p.hidden = false " +
            "AND (:category IS NULL OR p.category = :category) " +

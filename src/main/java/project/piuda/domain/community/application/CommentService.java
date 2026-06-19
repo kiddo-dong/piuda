@@ -83,6 +83,9 @@ public class CommentService {
         if (!comment.getWriter().getId().equals(user.getId())) {
             throw new ForbiddenException("본인의 댓글만 수정할 수 있습니다.");
         }
+        if (comment.isHidden()) {
+            throw new BusinessException("신고로 인해 숨겨진 댓글은 수정할 수 없습니다.");
+        }
         comment.update(request.getContent());
     }
 

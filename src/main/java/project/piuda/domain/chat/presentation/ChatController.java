@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.chat.application.ChatService;
 import project.piuda.domain.chat.application.dto.*;
@@ -34,7 +35,7 @@ public class ChatController {
     @PostMapping
     public ResponseEntity<ChatRoomResponse> createOrGetRoom(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody CreateChatRoomRequest request) {
+            @Valid @RequestBody CreateChatRoomRequest request) {
         return ResponseEntity.ok(chatService.createOrGetRoom(userDetails.getUsername(), request.getTargetNickname()));
     }
 

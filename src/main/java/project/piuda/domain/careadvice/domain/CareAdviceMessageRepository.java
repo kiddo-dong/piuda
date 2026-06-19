@@ -13,4 +13,6 @@ public interface CareAdviceMessageRepository extends JpaRepository<CareAdviceMes
 
     @Query("SELECT m FROM CareAdviceMessage m WHERE m.session.id = :sessionId ORDER BY m.createdAt DESC")
     List<CareAdviceMessage> findRecentMessages(@Param("sessionId") Long sessionId, Pageable pageable);
+
+    void deleteAllBySessionIn(List<CareAdviceSession> sessions);
 }

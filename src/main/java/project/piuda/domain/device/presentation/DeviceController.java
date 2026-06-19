@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +27,7 @@ public class DeviceController {
     @Operation(summary = "디바이스 등록", description = "ESP32 디바이스 마스터 정보를 등록합니다. 인증 불필요.")
     @ApiResponse(responseCode = "200", description = "등록 성공 - 디바이스 ID 반환")
     @PostMapping
-    public ResponseEntity<Long> registerDevice(@RequestBody DeviceRegisterRequest request) {
+    public ResponseEntity<Long> registerDevice(@Valid @RequestBody DeviceRegisterRequest request) {
         return ResponseEntity.ok(deviceService.registerDevice(request));
     }
 
@@ -63,7 +64,7 @@ public class DeviceController {
     @PostMapping("/{deviceSerial}/tts")
     public ResponseEntity<Void> queueTts(
             @Parameter(description = "디바이스 시리얼 번호") @PathVariable String deviceSerial,
-            @RequestBody TtsQueueRequest request) throws IOException {
+            @Valid @RequestBody TtsQueueRequest request) throws IOException {
         deviceService.queueTts(deviceSerial, request);
         return ResponseEntity.ok().build();
     }

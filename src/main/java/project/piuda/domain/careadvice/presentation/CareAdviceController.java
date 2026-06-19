@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.careadvice.application.CareAdviceService;
 import project.piuda.domain.careadvice.application.dto.*;
@@ -44,7 +45,7 @@ public class CareAdviceController {
     public ResponseEntity<SendCareAdviceResponse> sendMessage(
             @Parameter(description = "세션 ID") @PathVariable Long sessionId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody CareAdviceMessageRequest request) {
+            @Valid @RequestBody CareAdviceMessageRequest request) {
         return ResponseEntity.ok(careAdviceService.sendMessage(sessionId, userDetails.getUsername(), request));
     }
 

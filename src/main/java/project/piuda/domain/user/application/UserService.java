@@ -6,6 +6,20 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.piuda.domain.calendar.domain.CareCalendarRepository;
+import project.piuda.domain.careadvice.domain.CareAdviceMessageRepository;
+import project.piuda.domain.careadvice.domain.CareAdviceSession;
+import project.piuda.domain.careadvice.domain.CareAdviceSessionRepository;
+import project.piuda.domain.caregiverdiary.domain.CaregiverDiaryRepository;
+import project.piuda.domain.chat.domain.ChatMessageRepository;
+import project.piuda.domain.chat.domain.ChatRoom;
+import project.piuda.domain.chat.domain.ChatRoomRepository;
+import project.piuda.domain.community.domain.*;
+import project.piuda.domain.dailylog.domain.DailyLogRepository;
+import project.piuda.domain.memorygallery.domain.MemoryGalleryRepository;
+import project.piuda.domain.patient.domain.PatientMemberRepository;
+import project.piuda.domain.report.domain.ReportRepository;
+import project.piuda.domain.report.domain.ReportTargetType;
 import project.piuda.domain.user.application.dto.LoginRequest;
 import project.piuda.domain.user.application.dto.OnboardingRequest;
 import project.piuda.domain.user.application.dto.PublicUserResponse;
@@ -37,6 +51,20 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final BCryptPasswordEncoder passwordEncoder;
     private final S3UploadService s3UploadService;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatMessageRepository chatMessageRepository;
+    private final PostRepository postRepository;
+    private final PostLikeRepository postLikeRepository;
+    private final PostScrapRepository postScrapRepository;
+    private final CommentRepository commentRepository;
+    private final ReportRepository reportRepository;
+    private final CaregiverDiaryRepository caregiverDiaryRepository;
+    private final CareAdviceSessionRepository careAdviceSessionRepository;
+    private final CareAdviceMessageRepository careAdviceMessageRepository;
+    private final PatientMemberRepository patientMemberRepository;
+    private final MemoryGalleryRepository memoryGalleryRepository;
+    private final CareCalendarRepository careCalendarRepository;
+    private final DailyLogRepository dailyLogRepository;
 
     @Transactional
     public void signUp(SignUpRequest request, MultipartFile image) throws IOException {
@@ -206,6 +234,67 @@ public class UserService {
     public void deleteMe(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+
+        // 리프레시 토큰
+        refreshTokenRepository.deleteByUser(user);
+
+        // 채팅 (메시지 → 방)
+        List<ChatRoom> rooms = chatRoomRepository.findAllByUserOrderByLastMessage(user);
+        if (!rooms.isEmpty()) {
+            chatMessageRepository.deleteAllByChatRoomIn(rooms);
+            chatRoomRepository.deleteAll(rooms);
+        }
+
+        // 내 댓글에 대한 신고 → 내 댓글 삭제 (@OnDelete CASCADE로 답글 자동 삭제)
+        List<Comment> myComments = commentRepository.findAllByWriter(user);
+        if (!myComments.isEmpty()) {
+            List<Long> myCommentIds = myComments.stream().map(Comment::getId).toList();
+            reportRepository.deleteAllByTargetTypeAndTargetIdIn(ReportTargetType.COMMENT, myCommentIds);
+            commentRepository.deleteAll(myComments);
+        }
+
+        // 내 게시글의 하위 데이터 → 내 게시글 삭제 (PostImage cascade)
+        List<Post> myPosts = postRepository.findAllByWriter(user);
+        if (!myPosts.isEmpty()) {
+            List<Long> myPostIds = myPosts.stream().map(Post::getId).toList();
+            reportRepository.deleteAllByTargetTypeAndTargetIdIn(ReportTargetType.POST, myPostIds);
+            postLikeRepository.deleteAllByPostIn(myPosts);
+            postScrapRepository.deleteAllByPostIn(myPosts);
+            commentRepository.deleteAllByPostIn(myPosts);
+            postRepository.deleteAll(myPosts);
+        }
+
+        // 다른 게시글에 한 좋아요·스크랩·신고
+        postLikeRepository.deleteAllByUser(user);
+        postScrapRepository.deleteAllByUser(user);
+        reportRepository.deleteAllByReporter(user);
+
+        // 간병일기
+        caregiverDiaryRepository.deleteAllByUser(user);
+
+        // AI 케어 어드바이스 (메시지 → 세션)
+        List<CareAdviceSession> sessions = careAdviceSessionRepository.findAllByUser(user);
+        if (!sessions.isEmpty()) {
+            careAdviceMessageRepository.deleteAllBySessionIn(sessions);
+            careAdviceSessionRepository.deleteAll(sessions);
+        }
+
+        // 케어 캘린더 (assignee 참조 해제 → writer 항목 삭제)
+        careCalendarRepository.clearAssignee(user);
+        careCalendarRepository.deleteAllByWriter(user);
+
+        // 일지 (CareCalendar 선 삭제 후 삭제)
+        dailyLogRepository.deleteAllByWriter(user);
+
+        // 환자 멤버십
+        patientMemberRepository.deleteAllByUser(user);
+
+        // 간병인 프로필
+        caregiverProfileRepository.findByUser(user).ifPresent(caregiverProfileRepository::delete);
+
+        // 메모리 갤러리
+        memoryGalleryRepository.deleteAllByWriter(user);
+
         userRepository.delete(user);
     }
 

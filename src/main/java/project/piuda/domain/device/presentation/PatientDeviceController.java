@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -43,7 +44,7 @@ public class PatientDeviceController {
     public ResponseEntity<Void> linkDevice(
             @Parameter(description = "환자 ID") @PathVariable Long patientId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody DeviceLinkRequest request) {
+            @Valid @RequestBody DeviceLinkRequest request) {
         deviceService.linkDevice(patientId, userDetails.getUsername(), request);
         return ResponseEntity.ok().build();
     }

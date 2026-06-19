@@ -3,6 +3,7 @@ package project.piuda.domain.community.domain;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import project.piuda.domain.user.domain.User;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,4 +15,8 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
     @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.post.id IN :postIds AND pl.user.id = :userId")
     Set<Long> findLikedPostIds(@Param("postIds") List<Long> postIds, @Param("userId") Long userId);
+
+    void deleteAllByUser(User user);
+
+    void deleteAllByPostIn(List<Post> posts);
 }

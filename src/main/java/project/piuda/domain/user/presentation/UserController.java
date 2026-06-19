@@ -96,7 +96,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "유효하지 않거나 만료된 리프레시 토큰")
     })
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(@RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(service.refresh(request.getRefreshToken()));
     }
 
@@ -141,7 +141,7 @@ public class UserController {
     @PutMapping("/fcm-token")
     public ResponseEntity<Void> updateFcmToken(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody FcmTokenRequest request) {
+            @Valid @RequestBody FcmTokenRequest request) {
         service.updateFcmToken(userDetails.getUsername(), request.getFcmToken());
         return ResponseEntity.ok().build();
     }

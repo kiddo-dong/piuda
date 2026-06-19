@@ -2,6 +2,8 @@ package project.piuda.domain.community.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import project.piuda.domain.user.domain.User;
 
 import java.time.LocalDateTime;
@@ -27,6 +29,7 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Comment parentComment;
 
     @Column(nullable = false, columnDefinition = "TEXT")

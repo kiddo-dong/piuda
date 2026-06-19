@@ -1,6 +1,9 @@
 package project.piuda.domain.patient.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import project.piuda.domain.patient.domain.PatientMember;
 import project.piuda.domain.patient.domain.PatientMemberId;
 import project.piuda.domain.user.domain.User;
@@ -12,4 +15,8 @@ public interface PatientMemberRepository extends JpaRepository<PatientMember, Pa
     boolean existsByPatientAndUser(Patient patient, User user);
 
     List<PatientMember> findByUserId(Long userId);
+
+    @Modifying
+    @Query("DELETE FROM PatientMember pm WHERE pm.user = :user")
+    void deleteAllByUser(@Param("user") User user);
 }

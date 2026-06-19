@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.caregiverdiary.application.CaregiverDiaryService;
 import project.piuda.domain.caregiverdiary.application.dto.CaregiverDiaryRequest;
@@ -29,7 +30,7 @@ public class CaregiverDiaryController {
     @PostMapping
     public ResponseEntity<Long> createDiary(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody CaregiverDiaryRequest request) {
+            @Valid @RequestBody CaregiverDiaryRequest request) {
         return ResponseEntity.ok(diaryService.createDiary(userDetails.getUsername(), request));
     }
 
@@ -64,7 +65,7 @@ public class CaregiverDiaryController {
     public ResponseEntity<Void> updateDiary(
             @Parameter(description = "일기 ID") @PathVariable Long diaryId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody CaregiverDiaryRequest request) {
+            @Valid @RequestBody CaregiverDiaryRequest request) {
         diaryService.updateDiary(diaryId, userDetails.getUsername(), request);
         return ResponseEntity.ok().build();
     }

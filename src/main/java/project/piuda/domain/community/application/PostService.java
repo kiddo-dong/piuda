@@ -108,6 +108,9 @@ public class PostService {
         User user = getUser(userEmail);
         Post post = getPostOrThrow(postId);
         validateOwner(post.getWriter().getId(), user.getId());
+        if (post.isHidden()) {
+            throw new BusinessException("신고로 인해 숨겨진 게시글은 수정할 수 없습니다.");
+        }
         validateImageCount(images);
 
         post.update(request.getTitle(), request.getContent(), request.getCategory());
@@ -130,6 +133,9 @@ public class PostService {
     public boolean toggleScrap(Long postId, String userEmail) {
         User user = getUser(userEmail);
         Post post = getPostOrThrow(postId);
+        if (post.isHidden()) {
+            throw new BusinessException("숨겨진 게시글은 스크랩할 수 없습니다.");
+        }
 
         return postScrapRepository.findByPostIdAndUserId(postId, user.getId())
                 .map(scrap -> {

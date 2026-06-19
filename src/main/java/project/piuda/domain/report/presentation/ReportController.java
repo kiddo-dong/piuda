@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import project.piuda.domain.report.application.ReportService;
 import project.piuda.domain.report.application.dto.ReportRequest;
@@ -26,7 +27,7 @@ public class ReportController {
     public ResponseEntity<Void> reportPost(
             @Parameter(description = "신고할 게시글 ID") @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody ReportRequest request) {
+            @Valid @RequestBody ReportRequest request) {
         reportService.reportPost(postId, userDetails.getUsername(), request);
         return ResponseEntity.ok().build();
     }
@@ -38,7 +39,7 @@ public class ReportController {
     public ResponseEntity<Void> reportComment(
             @Parameter(description = "신고할 댓글 ID") @PathVariable Long commentId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody ReportRequest request) {
+            @Valid @RequestBody ReportRequest request) {
         reportService.reportComment(commentId, userDetails.getUsername(), request);
         return ResponseEntity.ok().build();
     }
