@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.user.application.UserService;
 import project.piuda.domain.user.application.dto.*;
+import project.piuda.domain.user.application.dto.PublicUserResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -132,5 +133,16 @@ public class UserController {
     public ResponseEntity<List<RankingResponse>> getRanking(
             @Parameter(description = "조회할 상위 인원 수 (기본값 10)") @RequestParam(defaultValue = "10") int limit) {
         return ResponseEntity.ok(service.getRanking(limit));
+    }
+
+    @Operation(summary = "공개 프로필 조회", description = "닉네임으로 다른 사용자의 공개 프로필을 조회합니다. 인증 필요.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 닉네임")
+    })
+    @GetMapping("/{nickname}/profile")
+    public ResponseEntity<PublicUserResponse> getUserProfile(
+            @Parameter(description = "조회할 사용자 닉네임") @PathVariable String nickname) {
+        return ResponseEntity.ok(service.getUserProfile(nickname));
     }
 }

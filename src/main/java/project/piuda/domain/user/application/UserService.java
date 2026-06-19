@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.piuda.domain.user.application.dto.LoginRequest;
 import project.piuda.domain.user.application.dto.OnboardingRequest;
+import project.piuda.domain.user.application.dto.PublicUserResponse;
 import project.piuda.domain.user.application.dto.RankingResponse;
 import project.piuda.domain.user.application.dto.SignUpRequest;
 import project.piuda.domain.user.application.dto.TokenResponse;
@@ -98,6 +99,7 @@ public class UserService {
                     .build();
             caregiverProfileRepository.save(profile);
         }
+
         String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
         String refreshToken = issueRefreshToken(user);
         return new TokenResponse(accessToken, refreshToken);
@@ -205,6 +207,14 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
         userRepository.delete(user);
+    }
+
+    public PublicUserResponse getUserProfile(String nickname) {
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        CaregiverProfile profile = (user.getRole() == Role.CAREGIVER)
+                ? caregiverProfileRepository.findByUser(user).orElse(null) : null;
+        return new PublicUserResponse(user, profile);
     }
 
     @Cacheable(value = "ranking", key = "#limit")
