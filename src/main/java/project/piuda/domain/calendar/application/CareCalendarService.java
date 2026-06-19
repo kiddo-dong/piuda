@@ -60,6 +60,10 @@ public class CareCalendarService {
                 .collect(Collectors.toList());
     }
 
+    public CareCalendarResponse getCalendarEvent(Long calendarId) {
+        return new CareCalendarResponse(getCalendar(calendarId));
+    }
+
     @Transactional
     public void updateSchedule(Long calendarId, String userEmail, CareCalendarRequest request) {
         CareCalendar calendar = getCalendar(calendarId);

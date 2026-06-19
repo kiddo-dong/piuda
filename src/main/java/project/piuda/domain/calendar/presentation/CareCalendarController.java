@@ -47,6 +47,17 @@ public class CareCalendarController {
         return ResponseEntity.ok(careCalendarService.getCalendarEvents(patientId));
     }
 
+    @Operation(summary = "일정 단건 조회", description = "캘린더 ID로 특정 일정을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "일정 없음")
+    })
+    @GetMapping("/calendars/{calendarId}")
+    public ResponseEntity<CareCalendarResponse> getCalendarEvent(
+            @Parameter(description = "캘린더 ID") @PathVariable Long calendarId) {
+        return ResponseEntity.ok(careCalendarService.getCalendarEvent(calendarId));
+    }
+
     @Operation(summary = "일정 수정", description = "MANUAL 타입 일정만 수정 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "수정 성공"),
