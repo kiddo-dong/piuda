@@ -41,16 +41,22 @@ public class FcmService {
     }
 
     public void send(String fcmToken, String title, String body) {
+        send(fcmToken, title, body, null);
+    }
+
+    public void send(String fcmToken, String title, String body, Long roomId) {
         if (firebaseApp == null || fcmToken == null) return;
         try {
-            Message message = Message.builder()
+            Message.Builder builder = Message.builder()
                     .setToken(fcmToken)
                     .setNotification(Notification.builder()
                             .setTitle(title)
                             .setBody(body)
-                            .build())
-                    .build();
-            FirebaseMessaging.getInstance(firebaseApp).send(message);
+                            .build());
+            if (roomId != null) {
+                builder.putData("roomId", String.valueOf(roomId));
+            }
+            FirebaseMessaging.getInstance(firebaseApp).send(builder.build());
         } catch (Exception e) {
             log.warn("FCM 푸쉬 알림 전송 실패: token={}", fcmToken, e);
         }

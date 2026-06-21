@@ -146,7 +146,7 @@ public class ChatService {
                 recipient.getEmail(),
                 "/queue/notifications",
                 new ChatNotificationResponse(room.getId(), sender.getNickname(), preview, unreadCount));
-        fcmService.send(recipient.getFcmToken(), sender.getNickname(), preview);
+        fcmService.send(recipient.getFcmToken(), sender.getNickname(), preview, room.getId());
     }
 
     private void validateMember(ChatRoom room, User user) {
