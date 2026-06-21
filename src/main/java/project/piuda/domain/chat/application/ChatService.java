@@ -121,7 +121,9 @@ public class ChatService {
                     ChatMessage.builder().chatRoom(room).sender(sender)
                             .messageType(type).content(fileUrl).fileName(originalName).build());
             room.updateLastMessage(type == MessageType.IMAGE ? "[이미지]" : "[파일] " + originalName);
-            responses.add(new ChatMessageResponse(message, sender));
+            ChatMessageResponse response = new ChatMessageResponse(message, sender);
+            messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+            responses.add(response);
         }
 
         User recipient = room.getOtherUser(sender);
