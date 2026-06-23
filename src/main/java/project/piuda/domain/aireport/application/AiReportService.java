@@ -30,6 +30,7 @@ import project.piuda.global.exception.NotFoundException;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Slf4j
@@ -53,7 +54,7 @@ public class AiReportService {
         Patient patient = getPatient(patientId);
         validatePatientAccess(patient, user);
 
-        LocalDate thisMonday = LocalDate.now().with(DayOfWeek.MONDAY);
+        LocalDate thisMonday = LocalDate.now(ZoneId.of("Asia/Seoul")).with(DayOfWeek.MONDAY);
 
         if (aiReportRepository.existsByPatientIdAndWeekStart(patientId, thisMonday)) {
             throw new BusinessException("이번 주 리포트가 이미 생성되어 있습니다. 기존 리포트를 조회해주세요.");
