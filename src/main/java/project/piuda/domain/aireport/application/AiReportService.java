@@ -114,12 +114,24 @@ public class AiReportService {
         User user = getUser(userEmail);
         Patient patient = getPatient(patientId);
         validatePatientAccess(patient, user);
+        return new AiReportResponse(getOwnedReport(patientId, reportId, user));
+    }
+
+    @Transactional
+    public void deleteReport(Long patientId, Long reportId, String userEmail) {
+        User user = getUser(userEmail);
+        Patient patient = getPatient(patientId);
+        validatePatientAccess(patient, user);
+        aiReportRepository.delete(getOwnedReport(patientId, reportId, user));
+    }
+
+    private AiReport getOwnedReport(Long patientId, Long reportId, User user) {
         AiReport report = aiReportRepository.findById(reportId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 리포트입니다."));
         if (!report.getPatient().getId().equals(patientId)) {
             throw new ForbiddenException("해당 환자의 리포트가 아닙니다.");
         }
-        return new AiReportResponse(report);
+        return report;
     }
 
     // ─── 프롬프트 빌더 ──────────────────────────────────────────

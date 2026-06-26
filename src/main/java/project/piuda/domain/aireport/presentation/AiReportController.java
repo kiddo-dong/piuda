@@ -53,4 +53,14 @@ public class AiReportController {
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(aiReportService.getReport(patientId, reportId, userDetails.getUsername()));
     }
+
+    @Operation(summary = "리포트 삭제", description = "특정 리포트를 삭제합니다.")
+    @DeleteMapping("/{reportId}")
+    public ResponseEntity<Void> deleteReport(
+            @Parameter(description = "환자 ID") @PathVariable Long patientId,
+            @Parameter(description = "리포트 ID") @PathVariable Long reportId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        aiReportService.deleteReport(patientId, reportId, userDetails.getUsername());
+        return ResponseEntity.ok().build();
+    }
 }

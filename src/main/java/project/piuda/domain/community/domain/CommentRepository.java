@@ -9,6 +9,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByPostIdAndParentCommentIsNullOrderByCreatedAtAsc(Long postId);
     List<Comment> findByParentCommentIdOrderByCreatedAtAsc(Long parentCommentId);
     List<Comment> findByParentCommentIdInOrderByCreatedAtAsc(List<Long> parentCommentIds);
+    List<Comment> findByPostId(Long postId);
 
     List<Comment> findAllByWriter(User writer);
 

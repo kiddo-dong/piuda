@@ -10,12 +10,15 @@ import project.piuda.domain.community.domain.Comment;
 import project.piuda.domain.community.domain.CommentRepository;
 import project.piuda.domain.community.domain.Post;
 import project.piuda.domain.community.domain.PostRepository;
+import project.piuda.domain.report.domain.ReportRepository;
+import project.piuda.domain.report.domain.ReportTargetType;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
 import project.piuda.global.exception.BusinessException;
 import project.piuda.global.exception.ForbiddenException;
 import project.piuda.global.exception.NotFoundException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,6 +31,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final ReportRepository reportRepository;
 
     @Transactional
     public Long createComment(Long postId, String userEmail, CommentRequest request) {
@@ -94,7 +98,26 @@ public class CommentService {
         if (!comment.getWriter().getId().equals(user.getId())) {
             throw new ForbiddenException("본인의 댓글만 삭제할 수 있습니다.");
         }
-        commentRepository.delete(comment);
+        deleteCommentCascade(comment);
+    }
+
+    /**
+     * 소유자 검증 없이 댓글과 하위 데이터를 삭제한다. (신고 자동 삭제 등 시스템 경로용)
+     */
+    @Transactional
+    public void forceDeleteComment(Comment comment) {
+        deleteCommentCascade(comment);
+    }
+
+    private void deleteCommentCascade(Comment comment) {
+        // 본 댓글 + 대댓글(@OnDelete CASCADE로 자동 삭제됨)에 대한 신고 선정리
+        List<Long> targetIds = new ArrayList<>();
+        targetIds.add(comment.getId());
+        commentRepository.findByParentCommentIdOrderByCreatedAtAsc(comment.getId())
+                .forEach(reply -> targetIds.add(reply.getId()));
+        reportRepository.deleteAllByTargetTypeAndTargetIdIn(ReportTargetType.COMMENT, targetIds);
+
+        commentRepository.delete(comment); // 대댓글은 DB ON DELETE CASCADE로 함께 삭제
     }
 
     @Transactional

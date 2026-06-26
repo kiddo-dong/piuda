@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.piuda.domain.community.application.CommentService;
+import project.piuda.domain.community.application.PostService;
 import project.piuda.domain.community.domain.Comment;
 import project.piuda.domain.community.domain.CommentRepository;
 import project.piuda.domain.community.domain.Post;
@@ -25,6 +27,8 @@ public class ReportService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
+    private final PostService postService;
+    private final CommentService commentService;
 
     @Value("${report.auto-hide-threshold:5}")
     private int autoHideThreshold;
@@ -81,8 +85,8 @@ public class ReportService {
     private void processPostReport(Post post) {
         long count = reportRepository.countByTargetTypeAndTargetId(ReportTargetType.POST, post.getId());
         if (count >= autoDeleteThreshold) {
-            reportRepository.deleteAllByTargetTypeAndTargetId(ReportTargetType.POST, post.getId());
-            postRepository.delete(post);
+            // 신고·댓글·좋아요·스크랩까지 정리 후 삭제 (FK 제약 위반 방지)
+            postService.forceDeletePost(post);
         } else if (count >= autoHideThreshold) {
             post.hide();
         }
@@ -91,8 +95,7 @@ public class ReportService {
     private void processCommentReport(Comment comment) {
         long count = reportRepository.countByTargetTypeAndTargetId(ReportTargetType.COMMENT, comment.getId());
         if (count >= autoDeleteThreshold) {
-            reportRepository.deleteAllByTargetTypeAndTargetId(ReportTargetType.COMMENT, comment.getId());
-            commentRepository.delete(comment);
+            commentService.forceDeleteComment(comment);
         } else if (count >= autoHideThreshold) {
             comment.hide();
         }

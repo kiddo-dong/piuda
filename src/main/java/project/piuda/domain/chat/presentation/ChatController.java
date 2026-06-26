@@ -62,16 +62,26 @@ public class ChatController {
 
     @Operation(summary = "이미지/파일 전송",
             description = "이미지(IMAGE) 또는 파일(FILE)을 S3에 업로드하고 채팅 메시지로 저장합니다. " +
-                          "저장 후 /topic/chat/{roomId}로 브로드캐스트됩니다.")
+                          "저장 시 ChatService에서 /topic/chat/{roomId}로 브로드캐스트됩니다.")
     @ApiResponse(responseCode = "200", description = "전송 성공")
     @PostMapping(value = "/{roomId}/files", consumes = "multipart/form-data")
     public ResponseEntity<List<ChatMessageResponse>> sendFiles(
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestPart("files") List<MultipartFile> files) throws IOException {
-        List<ChatMessageResponse> responses = chatService.sendFiles(roomId, userDetails.getUsername(), files);
-        responses.forEach(r -> messagingTemplate.convertAndSend("/topic/chat/" + roomId, r));
-        return ResponseEntity.ok(responses);
+        // 브로드캐스트는 ChatService.sendFiles 내부에서 수행 (중복 전송 방지)
+        return ResponseEntity.ok(chatService.sendFiles(roomId, userDetails.getUsername(), files));
+    }
+
+    @Operation(summary = "채팅방 나가기",
+            description = "채팅방과 모든 메시지를 삭제합니다. 1:1 구조상 상대방의 대화 내역도 함께 삭제됩니다.")
+    @ApiResponse(responseCode = "200", description = "삭제 성공")
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<Void> deleteRoom(
+            @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        chatService.deleteRoom(roomId, userDetails.getUsername());
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "읽음 처리",

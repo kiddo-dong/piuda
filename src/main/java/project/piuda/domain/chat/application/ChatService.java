@@ -140,6 +140,19 @@ public class ChatService {
         chatMessageRepository.markAllAsRead(room, me);
     }
 
+    /**
+     * 채팅방을 나간다. 1:1 구조상 방과 모든 메시지를 삭제하므로 상대방 대화 내역도 함께 사라진다.
+     */
+    @Transactional
+    public void deleteRoom(Long roomId, String userEmail) {
+        ChatRoom room = getRoom(roomId);
+        User me = getUser(userEmail);
+        validateMember(room, me);
+
+        chatMessageRepository.deleteAllByChatRoomIn(List.of(room));
+        chatRoomRepository.delete(room);
+    }
+
     private void sendNotification(ChatRoom room, User sender, User recipient, String preview) {
         long unreadCount = chatMessageRepository.countByChatRoomAndSenderNotAndIsReadFalse(room, recipient);
         messagingTemplate.convertAndSendToUser(

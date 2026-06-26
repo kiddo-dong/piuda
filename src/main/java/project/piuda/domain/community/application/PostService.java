@@ -7,6 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.community.application.dto.*;
 import project.piuda.domain.community.domain.*;
+import project.piuda.domain.report.domain.ReportRepository;
+import project.piuda.domain.report.domain.ReportTargetType;
 import project.piuda.domain.user.domain.User;
 import project.piuda.domain.user.domain.UserRepository;
 import project.piuda.global.exception.BusinessException;
@@ -30,6 +32,8 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostScrapRepository postScrapRepository;
+    private final CommentRepository commentRepository;
+    private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final S3UploadService s3UploadService;
 
@@ -126,6 +130,35 @@ public class PostService {
         User user = getUser(userEmail);
         Post post = getPostOrThrow(postId);
         validateOwner(post.getWriter().getId(), user.getId());
+        deletePostCascade(post);
+    }
+
+    /**
+     * 소유자 검증 없이 게시글과 모든 하위 데이터를 삭제한다.
+     * 신고 누적에 의한 자동 삭제(ReportService) 등 시스템 삭제 경로에서 사용.
+     */
+    @Transactional
+    public void forceDeletePost(Post post) {
+        deletePostCascade(post);
+    }
+
+    private void deletePostCascade(Post post) {
+        List<Post> single = List.of(post);
+
+        // 댓글에 대한 신고 정리 (대댓글 포함)
+        List<Long> commentIds = commentRepository.findByPostId(post.getId()).stream()
+                .map(Comment::getId).collect(Collectors.toList());
+        if (!commentIds.isEmpty()) {
+            reportRepository.deleteAllByTargetTypeAndTargetIdIn(ReportTargetType.COMMENT, commentIds);
+        }
+        // 게시글 자체에 대한 신고 정리
+        reportRepository.deleteAllByTargetTypeAndTargetId(ReportTargetType.POST, post.getId());
+
+        // 댓글 · 좋아요 · 스크랩 삭제 (이미지는 JPA cascade)
+        commentRepository.deleteAllByPostIn(single);
+        postLikeRepository.deleteAllByPostIn(single);
+        postScrapRepository.deleteAllByPostIn(single);
+
         postRepository.delete(post);
     }
 
