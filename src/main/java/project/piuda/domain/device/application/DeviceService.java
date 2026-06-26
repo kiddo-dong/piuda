@@ -94,6 +94,9 @@ public class DeviceService {
         patientRepository.findByDeviceDeviceSerial(device.getDeviceSerial())
                 .ifPresent(Patient::removeDevice);
 
+        // 큐잉된 TTS 메시지 정리 (FK 제약 위반 방지)
+        ttsMessageRepository.deleteAllByDevice(device);
+
         deviceRepository.delete(device);
     }
 

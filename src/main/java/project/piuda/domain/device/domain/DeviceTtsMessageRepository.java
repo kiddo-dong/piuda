@@ -6,4 +6,6 @@ import java.util.Optional;
 
 public interface DeviceTtsMessageRepository extends JpaRepository<DeviceTtsMessage, Long> {
     Optional<DeviceTtsMessage> findFirstByDevice_DeviceSerialAndPlayedFalseOrderByCreatedAtAsc(String deviceSerial);
+
+    void deleteAllByDevice(Device device);
 }
