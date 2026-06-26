@@ -3,8 +3,16 @@ package project.piuda.domain.patient.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.piuda.domain.aireport.domain.AiReportRepository;
+import project.piuda.domain.calendar.domain.CareCalendarRepository;
+import project.piuda.domain.careadvice.domain.CareAdviceMessageRepository;
+import project.piuda.domain.careadvice.domain.CareAdviceSession;
+import project.piuda.domain.careadvice.domain.CareAdviceSessionRepository;
+import project.piuda.domain.dailylog.domain.DailyLogRepository;
 import project.piuda.domain.device.domain.Device;
 import project.piuda.domain.device.domain.DeviceRepository;
+import project.piuda.domain.device.domain.VoiceRecordRepository;
+import project.piuda.domain.memorygallery.domain.MemoryGalleryRepository;
 import project.piuda.domain.patientmemory.domain.PatientMemory;
 import project.piuda.domain.patientmemory.domain.PatientMemoryRepository;
 import project.piuda.domain.patient.application.dto.PatientJoinRequest;
@@ -35,6 +43,13 @@ public class PatientService {
     private final PatientMemberRepository patientMemberRepository;
     private final PatientMapper patientMapper;
     private final PatientMemoryRepository patientMemoryRepository;
+    private final DailyLogRepository dailyLogRepository;
+    private final CareCalendarRepository careCalendarRepository;
+    private final MemoryGalleryRepository memoryGalleryRepository;
+    private final VoiceRecordRepository voiceRecordRepository;
+    private final AiReportRepository aiReportRepository;
+    private final CareAdviceSessionRepository careAdviceSessionRepository;
+    private final CareAdviceMessageRepository careAdviceMessageRepository;
 
     @Transactional
     public void disconnectDevice(Long patientId, Long userId) {
@@ -116,6 +131,38 @@ public class PatientService {
         Patient patient = getPatient(patientId);
         User user = getUserById(userId);
         validatePatientAccess(patient, user);
+
+        // 환자가 보유한 디바이스 연결 해제 (patient 테이블의 device_id FK)
+        patient.removeDevice();
+
+        // AI 주간 리포트
+        aiReportRepository.deleteAllByPatientId(patientId);
+
+        // AI 케어 어드바이스 (메시지 → 세션)
+        List<CareAdviceSession> sessions = careAdviceSessionRepository.findAllByPatientId(patientId);
+        if (!sessions.isEmpty()) {
+            careAdviceMessageRepository.deleteAllBySessionIn(sessions);
+            careAdviceSessionRepository.deleteAll(sessions);
+        }
+
+        // 케어 캘린더 (DailyLog FK 보유 → 일지보다 먼저 삭제)
+        careCalendarRepository.deleteAllByPatientId(patientId);
+
+        // 간병 일지
+        dailyLogRepository.deleteAllByPatientId(patientId);
+
+        // 음성 녹음
+        voiceRecordRepository.deleteAllByPatientId(patientId);
+
+        // 기억 갤러리
+        memoryGalleryRepository.deleteAllByPatientId(patientId);
+
+        // 환자 신상/의료 정보 (1:1)
+        patientMemoryRepository.deleteByPatientId(patientId);
+
+        // 환자-보호자 매핑
+        patientMemberRepository.deleteAllByPatient(patient);
+
         patientRepository.delete(patient);
     }
 

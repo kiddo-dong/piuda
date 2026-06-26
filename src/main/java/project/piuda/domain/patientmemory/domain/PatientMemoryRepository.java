@@ -6,4 +6,6 @@ import java.util.Optional;
 
 public interface PatientMemoryRepository extends JpaRepository<PatientMemory, Long> {
     Optional<PatientMemory> findByPatientId(Long patientId);
+
+    void deleteByPatientId(Long patientId);
 }

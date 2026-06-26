@@ -14,6 +14,8 @@ public interface CareCalendarRepository extends JpaRepository<CareCalendar, Long
 
     void deleteAllByWriter(User writer);
 
+    void deleteAllByPatientId(Long patientId);
+
     @Modifying
     @Query("UPDATE CareCalendar c SET c.assignee = null WHERE c.assignee = :user")
     void clearAssignee(@Param("user") User user);

@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface VoiceRecordRepository extends JpaRepository<VoiceRecord, Long> {
     List<VoiceRecord> findAllByPatientIdOrderByRecordedAtDesc(Long patientId);
+
+    void deleteAllByPatientId(Long patientId);
 }

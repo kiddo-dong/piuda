@@ -10,4 +10,5 @@ public interface AiReportRepository extends JpaRepository<AiReport, Long> {
     List<AiReport> findAllByPatientIdOrderByWeekStartDesc(Long patientId);
     Optional<AiReport> findTopByPatientIdOrderByWeekStartDesc(Long patientId);
     boolean existsByPatientIdAndWeekStart(Long patientId, LocalDate weekStart);
+    void deleteAllByPatientId(Long patientId);
 }

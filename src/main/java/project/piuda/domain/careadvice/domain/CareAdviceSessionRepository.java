@@ -13,4 +13,6 @@ public interface CareAdviceSessionRepository extends JpaRepository<CareAdviceSes
     List<CareAdviceSession> findByCreatedAtBefore(LocalDateTime cutoff);
 
     List<CareAdviceSession> findAllByUser(User user);
+
+    List<CareAdviceSession> findAllByPatientId(Long patientId);
 }

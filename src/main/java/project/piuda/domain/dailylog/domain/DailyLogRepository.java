@@ -16,4 +16,6 @@ public interface DailyLogRepository extends JpaRepository<DailyLog, Long> {
     List<DailyLog> findAllByWriter(User writer);
 
     void deleteAllByWriter(User writer);
+
+    void deleteAllByPatientId(Long patientId);
 }

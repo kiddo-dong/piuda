@@ -19,4 +19,8 @@ public interface PatientMemberRepository extends JpaRepository<PatientMember, Pa
     @Modifying
     @Query("DELETE FROM PatientMember pm WHERE pm.user = :user")
     void deleteAllByUser(@Param("user") User user);
+
+    @Modifying
+    @Query("DELETE FROM PatientMember pm WHERE pm.patient = :patient")
+    void deleteAllByPatient(@Param("patient") Patient patient);
 }

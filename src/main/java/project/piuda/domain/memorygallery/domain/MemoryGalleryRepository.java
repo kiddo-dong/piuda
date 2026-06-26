@@ -9,4 +9,6 @@ public interface MemoryGalleryRepository extends JpaRepository<MemoryGallery, Lo
     List<MemoryGallery> findAllByPatientIdOrderByUploadedAtDesc(Long patientId);
 
     void deleteAllByWriter(User writer);
+
+    void deleteAllByPatientId(Long patientId);
 }
