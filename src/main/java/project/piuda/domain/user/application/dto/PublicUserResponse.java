@@ -28,6 +28,6 @@ public class PublicUserResponse {
         this.caregiverType = (user.getRole() == Role.CAREGIVER && caregiverProfile != null && caregiverProfile.getCaregiverType() != null)
                 ? caregiverProfile.getCaregiverType().name() : null;
         this.score = user.getScore();
-        this.joinedAt = user.getCreatedAt().toLocalDate();
+        this.joinedAt = user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate() : null;
     }
 }
