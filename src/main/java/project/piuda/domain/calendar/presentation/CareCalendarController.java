@@ -39,7 +39,7 @@ public class CareCalendarController {
         return ResponseEntity.ok(id);
     }
 
-    @Operation(summary = "환자 캘린더 전체 일정 조회", description = "환자의 수동 등록 일정 및 하루일지 자동 생성 일정을 모두 조회합니다.")
+    @Operation(summary = "환자 캘린더 전체 일정 조회", description = "환자의 수동 등록 일정을 모두 조회합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/patients/{patientId}/calendars")
     public ResponseEntity<List<CareCalendarResponse>> getCalendarEvents(
