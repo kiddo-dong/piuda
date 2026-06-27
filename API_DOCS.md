@@ -16,7 +16,6 @@
 8. [케어 캘린더 (Calendar)](#8-케어-캘린더-calendar)
 9. [간병일기 (CaregiverDiary)](#9-간병일기-caregiverdiary)
 10. [AI 케어 어드바이스 (CareAdvice)](#10-ai-케어-어드바이스-careadvice)
-10-B. [AI 주간 돌봄 리포트 (AiReport)](#10-b-ai-주간-돌봄-리포트-aireport)
 11. [커뮤니티 게시글 (Post)](#11-커뮤니티-게시글-post)
 12. [커뮤니티 댓글 (Comment)](#12-커뮤니티-댓글-comment)
 13. [채팅 (Chat)](#13-채팅-chat)
@@ -718,65 +717,6 @@ FCM 토큰 등록/갱신
 
 ---
 
-## 10-B. AI 주간 돌봄 리포트 (AiReport)
-
-> ⚠️ **재구축 예정**: 데이터 소스 변경으로 내부 생성 로직은 비워진 상태입니다. 엔드포인트(API)와 응답 스키마만 유지되며, 실제 생성/조회 동작은 추후 재구현됩니다.
-
-**공통 응답 객체 (AiReportResponse)**
-```json
-{
-  "id": 12,
-  "weekStart": "2026-06-22",
-  "weekEnd": "2026-06-28",
-  "content": "📊 이번 주 돌봄 변화\n...\n\n💡 돌봄 방향 추천\n...\n\n📌 보호자 가이드\n...\n\n[추천: HOME_CARE]",
-  "recommendation": "HOME_CARE",
-  "createdAt": "2026-06-26T14:30:00"
-}
-```
-- `recommendation`: `HOME_CARE`(재가 돌봄) / `NURSING_HOME`(요양원) / `MAINTAIN`(현상 유지)
-- `content`는 `\n` 줄바꿈 포함. 끝에 `[추천: ...]` 태그가 붙으므로 화면에 숨기려면 정규식 `/\[추천:.*?\]/`로 제거하고 `recommendation` 필드로 배지 표시 권장.
-
----
-
-### POST `/api/v1/patients/{patientId}/ai-reports` 🔒
-이번 주 리포트 생성 (Request Body 없음). OpenAI 호출로 수 초 소요 — 로딩 처리 필요.
-
-**Response** `200 OK` — AiReportResponse
-
-| 상황 | HTTP | message |
-|------|------|---------|
-| 접근 권한 없음 | `403` | "해당 환자에 대한 접근 권한이 없습니다." |
-
----
-
-### GET `/api/v1/patients/{patientId}/ai-reports` 🔒
-리포트 전체 목록 (최신순)
-
-**Response** `200 OK` — AiReportResponse[]
-
----
-
-### GET `/api/v1/patients/{patientId}/ai-reports/latest` 🔒
-가장 최근 리포트 1건. 없으면 `404` "아직 생성된 리포트가 없습니다."
-
-**Response** `200 OK` — AiReportResponse
-
----
-
-### GET `/api/v1/patients/{patientId}/ai-reports/{reportId}` 🔒
-리포트 단건 조회
-
-**Response** `200 OK` — AiReportResponse
-
----
-
-### DELETE `/api/v1/patients/{patientId}/ai-reports/{reportId}` 🔒
-리포트 삭제
-
-**Response** `200 OK`
-
----
-
 ## 11. 커뮤니티 게시글 (Post)
 
 ### POST `/api/v1/posts` 🔒
@@ -1398,13 +1338,6 @@ TTS 메시지 전송 (앱 → 디바이스)
 | `TEXT` | 텍스트 |
 | `IMAGE` | 이미지 |
 | `FILE` | 파일 |
-
-### CareRecommendation (AI 리포트)
-| 값 | 설명 |
-|----|------|
-| `HOME_CARE` | 재가 돌봄 권장 |
-| `NURSING_HOME` | 요양원 입소 권장 |
-| `MAINTAIN` | 현상 유지 |
 
 ---
 

@@ -3,7 +3,6 @@ package project.piuda.domain.patient.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import project.piuda.domain.aireport.domain.AiReportRepository;
 import project.piuda.domain.calendar.domain.CareCalendarRepository;
 import project.piuda.domain.careadvice.domain.CareAdviceMessageRepository;
 import project.piuda.domain.careadvice.domain.CareAdviceSession;
@@ -45,7 +44,6 @@ public class PatientService {
     private final CareCalendarRepository careCalendarRepository;
     private final MemoryGalleryRepository memoryGalleryRepository;
     private final VoiceRecordRepository voiceRecordRepository;
-    private final AiReportRepository aiReportRepository;
     private final CareAdviceSessionRepository careAdviceSessionRepository;
     private final CareAdviceMessageRepository careAdviceMessageRepository;
 
@@ -132,9 +130,6 @@ public class PatientService {
 
         // 환자가 보유한 디바이스 연결 해제 (patient 테이블의 device_id FK)
         patient.removeDevice();
-
-        // AI 주간 리포트
-        aiReportRepository.deleteAllByPatientId(patientId);
 
         // AI 케어 어드바이스 (메시지 → 세션)
         List<CareAdviceSession> sessions = careAdviceSessionRepository.findAllByPatientId(patientId);
