@@ -72,8 +72,7 @@ domain/<name>/
 | `user` | 회원가입/로그인. Role: `PROTECTOR`(보호자) / `CAREGIVER`(간병인) / `MEDICAL_STAFF`(의료진) |
 | `patient` | 환자 등록. 보호자-환자 N:M 매핑은 `PatientMember` 중간 테이블 사용 |
 | `device` | ESP32 IoT 디바이스 등록 및 환자 연동 |
-| `dailylog` | 간병 일지 CRUD. 일지 생성 시 `CareCalendar`에 `DAILY_LOG` 타입 항목을 자동 생성 |
-| `calendar` | 케어 일정 관리. `CalendarType`: `MANUAL`(직접 등록) / `DAILY_LOG`(자동 생성) |
+| `calendar` | 케어 일정 관리. `CalendarType`: `SCHEDULE`(수동 등록) |
 | `patientmemory` | 환자 1인당 1개의 신상/의료 정보 레코드. 환자 등록 시 빈 레코드 자동 생성 |
 | `memorygallery` | 환자별 사진 갤러리. S3 URL을 저장하며 Writer(User) 참조를 가짐 |
 | `community` | 게시글/댓글 커뮤니티. `PostCategory`: QNA/INFO/CAREGIVER_TIPS/EMOTION/STORY/ADVERTISEMENT/ITEM_SALE/GROUP_BUY |
@@ -83,8 +82,6 @@ domain/<name>/
 
 ### 핵심 비즈니스 규칙
 - **환자 등록** (`PatientService.registerPatient`) 시 `PatientMemory` 빈 레코드를 함께 생성한다.
-- **일지 등록** (`DailyLogService.createDailyLog`) 시 `CareCalendar` 항목이 자동 생성된다.
-- `emotionalCommunicationMinutes` 필드는 `CAREGIVER`, `MEDICAL_STAFF` 역할만 기입 가능하다.
 - 이미지는 각 도메인 엔드포인트에서 `multipart/form-data`로 직접 처리한다 (별도 이미지 업로드 API 없음).
 - **게시글 스크랩**: `PostScrap` 엔티티로 관리. 토글(`POST /scraps`), 취소(`DELETE /scraps`), 목록 조회(`GET /scraps`) 지원.
 - **게시글 정렬**: `SortType` — `LATEST`(커서 페이징), `VIEWS`/`LIKES`(오프셋 페이징).

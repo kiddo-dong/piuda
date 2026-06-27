@@ -13,7 +13,6 @@
 4. [환자 (Patient)](#4-환자-patient)
 5. [환자 신상/의료 정보 (PatientMemory)](#5-환자-신상의료-정보-patientmemory)
 6. [기억 갤러리 (MemoryGallery)](#6-기억-갤러리-memorygallery)
-7. [간병 일지 (DailyLog)](#7-간병-일지-dailylog)
 8. [케어 캘린더 (Calendar)](#8-케어-캘린더-calendar)
 9. [간병일기 (CaregiverDiary)](#9-간병일기-caregiverdiary)
 10. [AI 케어 어드바이스 (CareAdvice)](#10-ai-케어-어드바이스-careadvice)
@@ -477,17 +476,15 @@ FCM 토큰 등록/갱신
 ```json
 [
   {
-    "galleryId": 5,          // null이면 일지 사진 (삭제 불가)
+    "galleryId": 5,
     "imageUrl": "https://...",
     "recordedAt": "2024-06-15T10:00:00",
     "writerName": "홍길동",
-    "memo": "오늘 산책",    // 직접 업로드만 존재
-    "source": "GALLERY"     // "GALLERY" | "DAILY_LOG"
+    "memo": "오늘 산책",
+    "source": "GALLERY"
   }
 ]
 ```
-
-> `galleryId`가 `null`이거나 `source`가 `DAILY_LOG`인 사진은 삭제 불가
 
 ---
 
@@ -521,87 +518,6 @@ FCM 토큰 등록/갱신
 
 ---
 
-## 7. 간병 일지 (DailyLog)
-
-### POST `/api/v1/patients/{patientId}/daily-logs` 🔒
-일지 작성 (multipart/form-data, CareCalendar 자동 생성)
-
-**Request** (form-data)
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| logDate | String | `YYYY-MM-DD` |
-| startTime | String | `HH:mm:ss` |
-| endTime | String | `HH:mm:ss` |
-| physicalHygiene | Boolean | 위생관리 |
-| physicalBath | Boolean | 목욕 |
-| physicalMealHelp | Boolean | 식사 도움 |
-| physicalPositionChange | Boolean | 체위 변경 |
-| physicalMobilityHelp | Boolean | 이동 도움 |
-| physicalToiletHelp | Boolean | 화장실 도움 |
-| physicalTotalMinutes | Integer | 신체활동 총 시간 |
-| cognitiveStimulationMinutes | Integer | 인지자극 시간 |
-| cognitiveLifeTogetherMinutes | Integer | 일상생활 함께하기 시간 |
-| cognitiveBehaviorManagementMinutes | Integer | 문제행동 관리 시간 |
-| emotionalCommunicationMinutes | Integer | 정서지원 시간 (CAREGIVER/MEDICAL_STAFF만) |
-| householdMealClean | Boolean | 식사 준비/정리 |
-| householdPersonalHelp | Boolean | 개인 활동 지원 |
-| householdTotalMinutes | Integer | 가사 총 시간 |
-| physicalFunctionTrend | String | HealthTrend enum |
-| mealFunctionTrend | String | HealthTrend enum |
-| bowelIncontinenceCount | Integer | 대변 실금 횟수 |
-| urineIncontinenceCount | Integer | 소변 실금 횟수 |
-| specialNotes | String | 특이사항 |
-| image | File | 첨부 이미지 |
-
-**Response** `200 OK` — 생성된 logId (Long)
-
----
-
-### GET `/api/v1/patients/{patientId}/daily-logs` 🔒
-환자 일지 목록 조회 (최신순)
-
-**Response** `200 OK` — DailyLogResponse[]
-
----
-
-### GET `/api/v1/daily-logs/{logId}` 🔒
-일지 단건 조회
-
-**Response** `200 OK`
-```json
-{
-  "id": 1,
-  "patientId": 1,
-  "writerName": "홍길동",
-  "writerRole": "CAREGIVER",
-  "logDate": "2024-06-15",
-  "startTime": "09:00:00",
-  "endTime": "18:00:00",
-  "physicalHygiene": true,
-  "physicalTotalMinutes": 60,
-  "emotionalCommunicationMinutes": 30,
-  "specialNotes": "오늘 기분 좋으셨음",
-  "imageUrl": "https://..."
-}
-```
-
----
-
-### PUT `/api/v1/daily-logs/{logId}` 🔒
-일지 수정 (작성자만, multipart/form-data)
-
-**Response** `200 OK`
-
----
-
-### DELETE `/api/v1/daily-logs/{logId}` 🔒
-일지 삭제 (작성자만, 연결된 CareCalendar도 함께 삭제)
-
-**Response** `200 OK`
-
----
-
 ## 8. 케어 캘린더 (Calendar)
 
 ### POST `/api/v1/patients/{patientId}/calendars` 🔒
@@ -624,7 +540,7 @@ FCM 토큰 등록/갱신
 ---
 
 ### GET `/api/v1/patients/{patientId}/calendars`
-환자 캘린더 전체 조회 (수동 등록 + 일지 자동 생성 포함, 시작시간순)
+환자 캘린더 전체 조회 (수동 등록, 시작시간순)
 
 **Response** `200 OK`
 ```json
@@ -645,8 +561,7 @@ FCM 토큰 등록/갱신
 ]
 ```
 
-> `calendarType`: `SCHEDULE`(수동), `DAILY_LOG`(일지 자동 생성)  
-> `DAILY_LOG` 타입은 수정/삭제 불가
+> `calendarType`: `SCHEDULE`(수동 등록)
 
 ---
 
@@ -805,8 +720,7 @@ FCM 토큰 등록/갱신
 
 ## 10-B. AI 주간 돌봄 리포트 (AiReport)
 
-> 최근 2주(이번 주 + 지난 주) 간병 일지를 집계해 **지난주 대비 변화 / 돌봄 방향 추천 / 보호자 가이드**를 자연어로 생성한다.
-> 주 1회만 생성 가능하며, 주 기준은 **한국 시간(KST) 월요일~일요일**.
+> ⚠️ **재구축 예정**: 데이터 소스 변경으로 내부 생성 로직은 비워진 상태입니다. 엔드포인트(API)와 응답 스키마만 유지되며, 실제 생성/조회 동작은 추후 재구현됩니다.
 
 **공통 응답 객체 (AiReportResponse)**
 ```json
@@ -831,8 +745,6 @@ FCM 토큰 등록/갱신
 
 | 상황 | HTTP | message |
 |------|------|---------|
-| 이번 주 이미 생성됨 | `400` | "이번 주 리포트가 이미 생성되어 있습니다..." |
-| 일지 데이터 없음 | `400` | "리포트 생성을 위한 일지 데이터가 없습니다..." |
 | 접근 권한 없음 | `403` | "해당 환자에 대한 접근 권한이 없습니다." |
 
 ---
@@ -1469,7 +1381,6 @@ TTS 메시지 전송 (앱 → 디바이스)
 | 값 | 설명 |
 |----|------|
 | `SCHEDULE` | 수동 등록 일정 |
-| `DAILY_LOG` | 일지 자동 생성 |
 
 ### ReportReason
 | 값 | 설명 |
@@ -1487,13 +1398,6 @@ TTS 메시지 전송 (앱 → 디바이스)
 | `TEXT` | 텍스트 |
 | `IMAGE` | 이미지 |
 | `FILE` | 파일 |
-
-### HealthTrend (일지)
-| 값 | 설명 |
-|----|------|
-| `IMPROVED` | 호전 |
-| `MAINTAINED` | 유지 |
-| `WORSENED` | 악화 |
 
 ### CareRecommendation (AI 리포트)
 | 값 | 설명 |

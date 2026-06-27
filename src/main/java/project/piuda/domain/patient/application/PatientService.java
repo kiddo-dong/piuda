@@ -8,7 +8,6 @@ import project.piuda.domain.calendar.domain.CareCalendarRepository;
 import project.piuda.domain.careadvice.domain.CareAdviceMessageRepository;
 import project.piuda.domain.careadvice.domain.CareAdviceSession;
 import project.piuda.domain.careadvice.domain.CareAdviceSessionRepository;
-import project.piuda.domain.dailylog.domain.DailyLogRepository;
 import project.piuda.domain.device.domain.Device;
 import project.piuda.domain.device.domain.DeviceRepository;
 import project.piuda.domain.device.domain.VoiceRecordRepository;
@@ -43,7 +42,6 @@ public class PatientService {
     private final PatientMemberRepository patientMemberRepository;
     private final PatientMapper patientMapper;
     private final PatientMemoryRepository patientMemoryRepository;
-    private final DailyLogRepository dailyLogRepository;
     private final CareCalendarRepository careCalendarRepository;
     private final MemoryGalleryRepository memoryGalleryRepository;
     private final VoiceRecordRepository voiceRecordRepository;
@@ -145,11 +143,8 @@ public class PatientService {
             careAdviceSessionRepository.deleteAll(sessions);
         }
 
-        // 케어 캘린더 (DailyLog FK 보유 → 일지보다 먼저 삭제)
+        // 케어 캘린더
         careCalendarRepository.deleteAllByPatientId(patientId);
-
-        // 간병 일지
-        dailyLogRepository.deleteAllByPatientId(patientId);
 
         // 음성 녹음
         voiceRecordRepository.deleteAllByPatientId(patientId);

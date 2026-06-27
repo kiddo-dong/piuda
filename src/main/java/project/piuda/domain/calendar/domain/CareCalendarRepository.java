@@ -10,7 +10,6 @@ import java.util.List;
 
 public interface CareCalendarRepository extends JpaRepository<CareCalendar, Long> {
     List<CareCalendar> findByPatientIdOrderByStartTimeAsc(Long patientId);
-    void deleteByDailyLogId(Long dailyLogId);
 
     void deleteAllByWriter(User writer);
 

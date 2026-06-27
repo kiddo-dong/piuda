@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import project.piuda.domain.dailylog.domain.DailyLog;
-import project.piuda.domain.dailylog.domain.DailyLogRepository;
 import project.piuda.domain.device.domain.VoiceRecord;
 import project.piuda.domain.device.domain.VoiceRecordRepository;
 import project.piuda.domain.memorygallery.application.dto.AudioGalleryItem;
@@ -34,7 +32,6 @@ import java.util.List;
 public class MemoryGalleryService {
 
     private final MemoryGalleryRepository memoryGalleryRepository;
-    private final DailyLogRepository dailyLogRepository;
     private final VoiceRecordRepository voiceRecordRepository;
     private final PatientRepository patientRepository;
     private final PatientMemberRepository patientMemberRepository;
@@ -69,11 +66,6 @@ public class MemoryGalleryService {
         validatePatientAccess(patient, getUser(userEmail));
 
         List<PhotoGalleryItem> items = new ArrayList<>();
-
-        for (DailyLog log : dailyLogRepository.findByPatientIdAndImageUrlIsNotNullOrderByLogDateDesc(patientId)) {
-            LocalDateTime recordedAt = log.getLogDate().atTime(log.getStartTime());
-            items.add(PhotoGalleryItem.ofDailyLogImage(log.getImageUrl(), recordedAt, log.getWriter().getName()));
-        }
 
         for (MemoryGallery gallery : memoryGalleryRepository.findAllByPatientIdOrderByUploadedAtDesc(patientId)) {
             items.add(PhotoGalleryItem.ofGalleryImage(

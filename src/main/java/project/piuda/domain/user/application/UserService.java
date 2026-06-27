@@ -15,7 +15,6 @@ import project.piuda.domain.chat.domain.ChatMessageRepository;
 import project.piuda.domain.chat.domain.ChatRoom;
 import project.piuda.domain.chat.domain.ChatRoomRepository;
 import project.piuda.domain.community.domain.*;
-import project.piuda.domain.dailylog.domain.DailyLogRepository;
 import project.piuda.domain.memorygallery.domain.MemoryGalleryRepository;
 import project.piuda.domain.patient.domain.PatientMemberRepository;
 import project.piuda.domain.report.domain.ReportRepository;
@@ -64,7 +63,6 @@ public class UserService {
     private final PatientMemberRepository patientMemberRepository;
     private final MemoryGalleryRepository memoryGalleryRepository;
     private final CareCalendarRepository careCalendarRepository;
-    private final DailyLogRepository dailyLogRepository;
 
     @Transactional
     public void signUp(SignUpRequest request, MultipartFile image) throws IOException {
@@ -279,9 +277,6 @@ public class UserService {
         // 케어 캘린더 (assignee 참조 해제 → writer 항목 삭제)
         careCalendarRepository.clearAssignee(user);
         careCalendarRepository.deleteAllByWriter(user);
-
-        // 일지 (CareCalendar 선 삭제 후 삭제)
-        dailyLogRepository.deleteAllByWriter(user);
 
         // 환자 멤버십
         patientMemberRepository.deleteAllByUser(user);
