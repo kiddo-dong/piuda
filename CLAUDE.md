@@ -78,7 +78,6 @@ domain/<name>/
 | `community` | 게시글/댓글 커뮤니티. `PostCategory`: QNA/INFO/CAREGIVER_TIPS/EMOTION/STORY/ADVERTISEMENT/ITEM_SALE/GROUP_BUY |
 | `auth` | 소셜 로그인 (Google/Kakao/Line). 신규 사용자는 온보딩 필요 |
 | `careadvice` | AI 케어 어드바이스. Spring AI + PGVector RAG, 세션 기반 대화 |
-| `caregiverdiary` | 간병일기. 간병인 본인의 프라이빗 일기. `MoodType`: HAPPY/GRATEFUL/TIRED/SAD/ANXIOUS/ANGRY/LONELY/HOPEFUL |
 
 ### 핵심 비즈니스 규칙
 - **환자 등록** (`PatientService.registerPatient`) 시 `PatientMemory` 빈 레코드를 함께 생성한다.

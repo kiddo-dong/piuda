@@ -10,7 +10,6 @@ import project.piuda.domain.calendar.domain.CareCalendarRepository;
 import project.piuda.domain.careadvice.domain.CareAdviceMessageRepository;
 import project.piuda.domain.careadvice.domain.CareAdviceSession;
 import project.piuda.domain.careadvice.domain.CareAdviceSessionRepository;
-import project.piuda.domain.caregiverdiary.domain.CaregiverDiaryRepository;
 import project.piuda.domain.chat.domain.ChatMessageRepository;
 import project.piuda.domain.chat.domain.ChatRoom;
 import project.piuda.domain.chat.domain.ChatRoomRepository;
@@ -57,7 +56,6 @@ public class UserService {
     private final PostScrapRepository postScrapRepository;
     private final CommentRepository commentRepository;
     private final ReportRepository reportRepository;
-    private final CaregiverDiaryRepository caregiverDiaryRepository;
     private final CareAdviceSessionRepository careAdviceSessionRepository;
     private final CareAdviceMessageRepository careAdviceMessageRepository;
     private final PatientMemberRepository patientMemberRepository;
@@ -263,9 +261,6 @@ public class UserService {
         postLikeRepository.deleteAllByUser(user);
         postScrapRepository.deleteAllByUser(user);
         reportRepository.deleteAllByReporter(user);
-
-        // 간병일기
-        caregiverDiaryRepository.deleteAllByUser(user);
 
         // AI 케어 어드바이스 (메시지 → 세션)
         List<CareAdviceSession> sessions = careAdviceSessionRepository.findAllByUser(user);

@@ -14,7 +14,6 @@
 5. [환자 신상/의료 정보 (PatientMemory)](#5-환자-신상의료-정보-patientmemory)
 6. [기억 갤러리 (MemoryGallery)](#6-기억-갤러리-memorygallery)
 8. [케어 캘린더 (Calendar)](#8-케어-캘린더-calendar)
-9. [간병일기 (CaregiverDiary)](#9-간병일기-caregiverdiary)
 10. [AI 케어 어드바이스 (CareAdvice)](#10-ai-케어-어드바이스-careadvice)
 11. [커뮤니티 게시글 (Post)](#11-커뮤니티-게시글-post)
 12. [커뮤니티 댓글 (Comment)](#12-커뮤니티-댓글-comment)
@@ -582,68 +581,6 @@ FCM 토큰 등록/갱신
 
 ### DELETE `/api/v1/calendars/{calendarId}` 🔒
 일정 삭제 (`SCHEDULE` 타입, 작성자만)
-
-**Response** `200 OK`
-
----
-
-## 9. 간병일기 (CaregiverDiary)
-
-> 간병인 본인만 볼 수 있는 프라이빗 일기
-
-### POST `/api/v1/diary` 🔒
-일기 작성
-
-**Request**
-```json
-{
-  "title": "오늘의 하루",
-  "content": "오늘은 힘들었지만...",
-  "mood": "TIRED"
-}
-```
-
-**Response** `200 OK` — 생성된 diaryId (Long)
-
----
-
-### GET `/api/v1/diary` 🔒
-내 일기 목록 조회 (최신순)
-
-**Response** `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "title": "오늘의 하루",
-    "content": "오늘은 힘들었지만...",
-    "mood": "TIRED",
-    "createdAt": "2024-06-15T22:00:00",
-    "updatedAt": "2024-06-15T22:00:00"
-  }
-]
-```
-
----
-
-### GET `/api/v1/diary/{diaryId}` 🔒
-일기 단건 조회 (작성자만)
-
-**Response** `200 OK` — CaregiverDiaryResponse
-
----
-
-### PUT `/api/v1/diary/{diaryId}` 🔒
-일기 수정 (작성자만)
-
-**Request** — POST와 동일
-
-**Response** `200 OK`
-
----
-
-### DELETE `/api/v1/diary/{diaryId}` 🔒
-일기 삭제 (작성자만)
 
 **Response** `200 OK`
 
@@ -1295,18 +1232,6 @@ TTS 메시지 전송 (앱 → 디바이스)
 | `ADVERTISEMENT` | 광고 |
 | `ITEM_SALE` | 물품 판매 |
 | `GROUP_BUY` | 공동구매 |
-
-### MoodType (간병일기)
-| 값 | 설명 |
-|----|------|
-| `HAPPY` | 행복 |
-| `GRATEFUL` | 감사 |
-| `TIRED` | 피곤 |
-| `SAD` | 슬픔 |
-| `ANXIOUS` | 불안 |
-| `ANGRY` | 화남 |
-| `LONELY` | 외로움 |
-| `HOPEFUL` | 희망 |
 
 ### CalendarCategory
 | 값 | 설명 |
