@@ -95,6 +95,8 @@ public class CareAdviceService {
         User user = getUser(userEmail);
         CareAdviceSession session = getSession(sessionId);
         validateSessionOwner(session, user);
+        // 하위 메시지 선삭제 (FK 제약 위반 방지)
+        messageRepository.deleteAllBySessionIn(List.of(session));
         sessionRepository.delete(session);
     }
 
@@ -127,6 +129,8 @@ public class CareAdviceService {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(SESSION_RETENTION_DAYS);
         List<CareAdviceSession> oldSessions = sessionRepository.findByCreatedAtBefore(cutoff);
         if (!oldSessions.isEmpty()) {
+            // 하위 메시지 선삭제 (FK 제약 위반 방지)
+            messageRepository.deleteAllBySessionIn(oldSessions);
             sessionRepository.deleteAll(oldSessions);
             log.info("[CareAdvice] 만료 세션 {}개 삭제 완료 (기준: {}일 이상)", oldSessions.size(), SESSION_RETENTION_DAYS);
         }
