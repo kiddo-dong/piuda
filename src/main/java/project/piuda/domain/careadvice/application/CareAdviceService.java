@@ -47,9 +47,10 @@ public class CareAdviceService {
         Patient patient = getPatient(patientId);
         validatePatientAccess(patient, user);
 
-        return new CareAdviceSessionResponse(sessionRepository.save(
-                CareAdviceSession.builder().user(user).patient(patient).build()
-        ));
+        CareAdviceSession session = sessionRepository.save(
+                CareAdviceSession.builder().user(user).patient(patient).build());
+        // 새 세션은 아직 메시지가 없어 preview는 null
+        return new CareAdviceSessionResponse(session, null);
     }
 
     @Transactional
@@ -104,7 +105,7 @@ public class CareAdviceService {
 
         return sessionRepository.findByUserIdAndPatientIdOrderByCreatedAtDesc(user.getId(), patientId)
                 .stream()
-                .map(CareAdviceSessionResponse::new)
+                .map(session -> new CareAdviceSessionResponse(session, buildPreview(session.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -129,6 +130,24 @@ public class CareAdviceService {
             sessionRepository.deleteAll(oldSessions);
             log.info("[CareAdvice] 만료 세션 {}개 삭제 완료 (기준: {}일 이상)", oldSessions.size(), SESSION_RETENTION_DAYS);
         }
+    }
+
+    // 세션의 첫 사용자 메시지 앞 40자 (프론트 세션 제목 생성용)
+    private static final int PREVIEW_MAX_LENGTH = 40;
+
+    private String buildPreview(Long sessionId) {
+        return messageRepository
+                .findFirstBySessionIdAndRoleOrderByCreatedAtAsc(sessionId, MessageRole.USER)
+                .map(message -> truncate(message.getContent()))
+                .orElse(null);
+    }
+
+    private String truncate(String text) {
+        if (text == null) return null;
+        String trimmed = text.strip();
+        return trimmed.length() <= PREVIEW_MAX_LENGTH
+                ? trimmed
+                : trimmed.substring(0, PREVIEW_MAX_LENGTH) + "…";
     }
 
     private User getUser(String email) {

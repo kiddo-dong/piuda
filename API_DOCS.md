@@ -596,14 +596,16 @@ FCM 토큰 등록/갱신
 {
   "sessionId": 1,
   "patientId": 1,
+  "preview": null,
   "createdAt": "2024-06-15T10:00:00"
 }
 ```
+> `preview`: 해당 세션의 **첫 사용자 메시지 앞 40자**(초과 시 `…`). 메시지가 없으면 `null`. 프론트에서 세션 제목 생성에 사용.
 
 ---
 
 ### POST `/api/v1/care-advice/sessions/{sessionId}/messages` 🔒
-메시지 전송 및 AI 응답 수신
+메시지 전송 및 AI 응답 수신 — AI 상담사 이름은 **시온이**
 
 **Request**
 ```json
@@ -615,6 +617,7 @@ FCM 토큰 등록/갱신
 **Response** `200 OK`
 ```json
 {
+  "assistantName": "시온이",
   "userMessage": {
     "messageId": 1,
     "role": "USER",
@@ -637,6 +640,16 @@ FCM 토큰 등록/갱신
 세션 목록 조회 (최신순)
 
 **Response** `200 OK` — CareAdviceSessionResponse[]
+```json
+[
+  {
+    "sessionId": 1,
+    "patientId": 1,
+    "preview": "어머니가 저녁마다 집에 가겠다고 하시는데 어떻게 하면 좋을까요",
+    "createdAt": "2024-06-15T10:00:00"
+  }
+]
+```
 
 ---
 

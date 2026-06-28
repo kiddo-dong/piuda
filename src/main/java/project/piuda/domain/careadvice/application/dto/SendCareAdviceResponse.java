@@ -5,6 +5,7 @@ import lombok.Getter;
 @Getter
 public class SendCareAdviceResponse {
 
+    private final String assistantName = "시온이";
     private final CareAdviceMessageResponse userMessage;
     private final CareAdviceMessageResponse assistantMessage;
     private final boolean ragUsed;
