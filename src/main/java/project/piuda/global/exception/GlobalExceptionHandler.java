@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
@@ -55,6 +56,13 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .orElse("입력값이 올바르지 않습니다.");
         return ResponseEntity.badRequest().body(new ErrorResponse(message));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException e) {
+        // 존재하지 않는 경로(삭제된 엔드포인트 등) 호출 → 404로 응답, 스택트레이스 미출력
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("존재하지 않는 엔드포인트입니다."));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
