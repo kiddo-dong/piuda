@@ -3,6 +3,7 @@ package project.piuda.global.infrastructure;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.reader.JsonMetadataGenerator;
 import org.springframework.ai.reader.JsonReader;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
@@ -18,7 +19,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -115,15 +118,24 @@ public class KnowledgeLoader implements ApplicationRunner {
         }
     }
 
+    // JSON에서 메타데이터로 보존할 구조 필드 (검색 결과 필터링/출처 표기에 활용)
+    private static final List<String> JSON_METADATA_KEYS = List.of(
+            "doc_id", "source", "page", "chapter", "section", "subsection", "chunk_id", "chunk_type");
+
+    // 검색 본문(임베딩 대상)에 함께 포함할 키 — 섹션 맥락을 벡터에 반영해 검색 정확도 향상
+    // (chapter는 "Chapter 1" 같은 일반 라벨이라 노이즈 → 메타데이터로만 보존)
+    private static final String[] JSON_CONTENT_KEYS = {"section", "subsection", "content"};
+
     private void loadJsonDocuments(PathMatchingResourcePatternResolver resolver, List<Document> target) {
         try {
             for (Resource resource : resolver.getResources("classpath:knowledge/*.json")) {
                 log.info("[RAG] JSON 로딩 중: {}", resource.getFilename());
                 try {
-                    // JSON 배열에서 "content" 필드를 문서 본문으로, "title"을 메타데이터로 사용
-                    // 형식: [{"title": "...", "content": "..."}]
-                    List<Document> docs = new JsonReader(resource, "content").get();
-                    docs.forEach(doc -> doc.getMetadata().put("source", resource.getFilename()));
+                    // chapter/section/subsection + content를 본문으로 임베딩하고,
+                    // 구조 필드(page/source/chunk_type 등)는 메타데이터로 보존한다.
+                    // 형식 예: [{"chapter":"...","section":"...","subsection":"...","content":"...", ...}]
+                    List<Document> docs = new JsonReader(resource, this::buildJsonMetadata, JSON_CONTENT_KEYS).get();
+                    docs.forEach(doc -> doc.getMetadata().put("file", resource.getFilename()));
                     target.addAll(docs);
                 } catch (Exception e) {
                     log.warn("[RAG] JSON 읽기 실패 - {}: {}", resource.getFilename(), e.getMessage());
@@ -132,5 +144,16 @@ public class KnowledgeLoader implements ApplicationRunner {
         } catch (IOException e) {
             log.warn("[RAG] JSON 탐색 실패: {}", e.getMessage());
         }
+    }
+
+    private Map<String, Object> buildJsonMetadata(Map<String, Object> json) {
+        Map<String, Object> metadata = new HashMap<>();
+        for (String key : JSON_METADATA_KEYS) {
+            Object value = json.get(key);
+            if (value != null) {
+                metadata.put(key, value);
+            }
+        }
+        return metadata;
     }
 }
