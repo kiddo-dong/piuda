@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import project.piuda.domain.calendar.application.CareCalendarService;
+import project.piuda.domain.calendar.application.dto.CalendarOverviewResponse;
 import project.piuda.domain.calendar.application.dto.CareCalendarRequest;
 import project.piuda.domain.calendar.application.dto.CareCalendarResponse;
 import lombok.RequiredArgsConstructor;
@@ -39,12 +40,13 @@ public class CareCalendarController {
         return ResponseEntity.ok(id);
     }
 
-    @Operation(summary = "환자 캘린더 전체 일정 조회", description = "환자의 수동 등록 일정을 모두 조회합니다.")
+    @Operation(summary = "환자 캘린더 전체 조회", description = "환자의 수동 등록 일정(calendars)과 케어 판단 기록(judgmentLogs)을 함께 반환합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/patients/{patientId}/calendars")
-    public ResponseEntity<List<CareCalendarResponse>> getCalendarEvents(
-            @Parameter(description = "환자 ID") @PathVariable Long patientId) {
-        return ResponseEntity.ok(careCalendarService.getCalendarEvents(patientId));
+    public ResponseEntity<CalendarOverviewResponse> getCalendarEvents(
+            @Parameter(description = "환자 ID") @PathVariable Long patientId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(careCalendarService.getCalendarEvents(patientId, userDetails.getUsername()));
     }
 
     @Operation(summary = "일정 단건 조회", description = "캘린더 ID로 특정 일정을 조회합니다.")

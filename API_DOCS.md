@@ -537,29 +537,47 @@ FCM 토큰 등록/갱신
 
 ---
 
-### GET `/api/v1/patients/{patientId}/calendars`
-환자 캘린더 전체 조회 (수동 등록, 시작시간순)
+### GET `/api/v1/patients/{patientId}/calendars` 🔒
+환자 캘린더 통합 조회 — **수동 일정(calendars)** + **케어 판단 기록(judgmentLogs)** 을 함께 반환.
+판단 기록은 저장은 분리돼 있고 조회 시에만 묶여 오며, **`createdAt` 기준으로 날짜에 매핑**하면 됩니다.
 
 **Response** `200 OK`
 ```json
-[
-  {
-    "id": 1,
-    "patientId": 1,
-    "writerName": "홍길동",
-    "assigneeName": "김간병",
-    "dailyLogId": null,
-    "title": "병원 방문",
-    "content": "서울대병원 신경과",
-    "calendarType": "SCHEDULE",
-    "category": "VISIT",
-    "startTime": "2024-06-20T10:00:00",
-    "endTime": "2024-06-20T12:00:00"
-  }
-]
+{
+  "calendars": [
+    {
+      "id": 1,
+      "patientId": 1,
+      "writerName": "홍길동",
+      "assigneeName": "김간병",
+      "title": "병원 방문",
+      "content": "서울대병원 신경과",
+      "calendarType": "SCHEDULE",
+      "category": "VISIT",
+      "startTime": "2024-06-20T10:00:00",
+      "endTime": "2024-06-20T12:00:00"
+    }
+  ],
+  "judgmentLogs": [
+    {
+      "id": 5,
+      "patientId": 1,
+      "writerName": "김간병",
+      "category": "MEAL",
+      "situation": "식사를 거부하셨어요",
+      "action": "죽으로 바꿔서 드렸습니다",
+      "rationale": "치아 상태가 안 좋아 보여서요",
+      "urgency": "IMMEDIATE",
+      "createdAt": "2026-06-30T14:20:00",
+      "updatedAt": null
+    }
+  ]
+}
 ```
 
-> `calendarType`: `SCHEDULE`(수동 등록)
+> - `calendarType`: `SCHEDULE`(수동 등록)
+> - 판단 기록 상세/작성/수정/삭제는 [케어 판단 기록 API](#10-c-케어-판단-기록-carejudgmentlog) 참고
+> - 환자에 연결된 사용자만 조회 가능 (권한 없으면 `403`)
 
 ---
 
