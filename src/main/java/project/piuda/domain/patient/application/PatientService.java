@@ -7,6 +7,7 @@ import project.piuda.domain.calendar.domain.CareCalendarRepository;
 import project.piuda.domain.careadvice.domain.CareAdviceMessageRepository;
 import project.piuda.domain.careadvice.domain.CareAdviceSession;
 import project.piuda.domain.careadvice.domain.CareAdviceSessionRepository;
+import project.piuda.domain.carejudgment.domain.CareJudgmentLogRepository;
 import project.piuda.domain.device.domain.Device;
 import project.piuda.domain.device.domain.DeviceRepository;
 import project.piuda.domain.device.domain.VoiceRecordRepository;
@@ -46,6 +47,7 @@ public class PatientService {
     private final VoiceRecordRepository voiceRecordRepository;
     private final CareAdviceSessionRepository careAdviceSessionRepository;
     private final CareAdviceMessageRepository careAdviceMessageRepository;
+    private final CareJudgmentLogRepository careJudgmentLogRepository;
 
     @Transactional
     public void disconnectDevice(Long patientId, Long userId) {
@@ -140,6 +142,9 @@ public class PatientService {
 
         // 케어 캘린더
         careCalendarRepository.deleteAllByPatientId(patientId);
+
+        // 케어 판단 기록
+        careJudgmentLogRepository.deleteAllByPatientId(patientId);
 
         // 음성 녹음
         voiceRecordRepository.deleteAllByPatientId(patientId);

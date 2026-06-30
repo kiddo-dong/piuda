@@ -78,6 +78,7 @@ domain/<name>/
 | `community` | 게시글/댓글 커뮤니티. `PostCategory`: QNA/INFO/CAREGIVER_TIPS/EMOTION/STORY/ADVERTISEMENT/ITEM_SALE/GROUP_BUY |
 | `auth` | 소셜 로그인 (Google/Kakao/Line). 신규 사용자는 온보딩 필요 |
 | `careadvice` | AI 케어 어드바이스. Spring AI + PGVector RAG, 세션 기반 대화 |
+| `carejudgment` | 케어 판단 기록. 간병인이 보호자 지시 없이 내린 단독 판단을 상황·판단·근거로 기록. 환자 종속, 즉시공유 시 보호자 FCM |
 
 ### 핵심 비즈니스 규칙
 - **환자 등록** (`PatientService.registerPatient`) 시 `PatientMemory` 빈 레코드를 함께 생성한다.

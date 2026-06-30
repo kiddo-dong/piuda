@@ -667,6 +667,84 @@ FCM 토큰 등록/갱신
 
 ---
 
+## 10-C. 케어 판단 기록 (CareJudgmentLog)
+
+> 간병인이 보호자의 사전 지시 없이 내린 단독 판단을 **상황·판단·근거**로 남기는 보관소.
+> **작성은 간병인만**, **조회는 환자에 연결된 사용자 전원**(보호자 포함). `urgency=IMMEDIATE`면 보호자에게 FCM 푸시.
+
+### POST `/api/v1/patients/{patientId}/care-judgments` 🔒
+판단 기록 작성 (CAREGIVER만)
+
+**Request**
+```json
+{
+  "category": "MEAL",
+  "situation": "식사를 거부하셨어요",
+  "action": "죽으로 바꿔서 드렸습니다",
+  "rationale": "치아 상태가 안 좋아 보여서요",
+  "urgency": "IMMEDIATE"
+}
+```
+- `category`: `MEAL`(식사) / `MOVEMENT`(이동) / `MEDICATION`(투약)
+- `urgency`: `NORMAL`(일반) / `NEEDS_OBSERVATION`(관찰필요) / `IMMEDIATE`(즉시공유)
+
+**Response** `200 OK` — 생성된 logId (Long)
+
+| 상황 | HTTP | message |
+|------|------|---------|
+| 간병인이 아님 | `403` | "케어 판단 기록은 간병인만 작성할 수 있습니다." |
+| 환자 접근 권한 없음 | `403` | "해당 환자에 대한 접근 권한이 없습니다." |
+
+---
+
+### GET `/api/v1/patients/{patientId}/care-judgments?category={category}` 🔒
+보관소 조회 (최신순). `category` 미지정 시 전체. 즉시공유 건수 포함.
+
+**Response** `200 OK`
+```json
+{
+  "immediateShareCount": 1,
+  "logs": [
+    {
+      "id": 5,
+      "patientId": 1,
+      "writerName": "김간병",
+      "category": "MEAL",
+      "situation": "식사를 거부하셨어요",
+      "action": "죽으로 바꿔서 드렸습니다",
+      "rationale": "치아 상태가 안 좋아 보여서요",
+      "urgency": "IMMEDIATE",
+      "createdAt": "2026-06-30T14:20:00",
+      "updatedAt": null
+    }
+  ]
+}
+```
+> `immediateShareCount`는 카테고리 필터와 무관하게 **환자 전체 기준 IMMEDIATE 건수** (목업의 "🔔 즉시공유 N건").
+
+---
+
+### GET `/api/v1/patients/{patientId}/care-judgments/{logId}` 🔒
+단건 조회
+
+**Response** `200 OK` — CareJudgmentLogResponse
+
+---
+
+### PUT `/api/v1/patients/{patientId}/care-judgments/{logId}` 🔒
+수정 (작성한 간병인 본인만). Request는 POST와 동일.
+
+**Response** `200 OK`
+
+---
+
+### DELETE `/api/v1/patients/{patientId}/care-judgments/{logId}` 🔒
+삭제 (작성한 간병인 본인만)
+
+**Response** `200 OK`
+
+---
+
 ## 11. 커뮤니티 게시글 (Post)
 
 ### POST `/api/v1/posts` 🔒

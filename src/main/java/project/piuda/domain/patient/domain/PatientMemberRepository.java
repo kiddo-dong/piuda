@@ -16,6 +16,8 @@ public interface PatientMemberRepository extends JpaRepository<PatientMember, Pa
 
     List<PatientMember> findByUserId(Long userId);
 
+    List<PatientMember> findByPatientId(Long patientId);
+
     @Modifying
     @Query("DELETE FROM PatientMember pm WHERE pm.user = :user")
     void deleteAllByUser(@Param("user") User user);
