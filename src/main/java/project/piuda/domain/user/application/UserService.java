@@ -160,7 +160,9 @@ public class UserService {
         }
 
         User user = refreshToken.getUser();
-        String newAccessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole().name());
+        // 소셜 로그인 후 온보딩 전(role=null) 사용자도 refresh를 호출할 수 있어 방어
+        String roleStr = user.getRole() != null ? user.getRole().name() : "NONE";
+        String newAccessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), roleStr);
         String newRefreshTokenValue = jwtTokenProvider.createRefreshToken();
         refreshToken.rotate(newRefreshTokenValue, jwtTokenProvider.getRefreshTokenExpiry());
 
