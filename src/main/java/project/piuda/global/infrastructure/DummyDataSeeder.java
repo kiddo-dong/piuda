@@ -64,6 +64,21 @@ public class DummyDataSeeder implements ApplicationRunner {
     private boolean seedEnabled;
 
     private final Random random = new Random(42);
+    private int userSeq = 0; // 이름/닉네임 풀을 계정 간 중복 없이 순차 소비
+
+    // 실사용자처럼 보이도록 — 실제 이름 40, 닉네임 40 (30명 + 여유분)
+    private static final String[] REAL_NAMES = {
+            "김민준", "이서연", "박도윤", "최지우", "정하준", "강서준", "조은우", "윤예은", "임시우", "한지호",
+            "오유진", "서준서", "신하은", "권민서", "황지안", "안수아", "송지훈", "전서윤", "홍예준", "유하율",
+            "고은서", "문건우", "양지유", "배주원", "백도현", "허시연", "남윤아", "심재원", "노아린", "하은호",
+            "곽태윤", "성지원", "차예린", "주민재", "우서아", "구본우", "나윤서", "진하람", "지승현", "채유나"
+    };
+    private static final String[] NICKNAMES = {
+            "행복한하루", "봄날햇살", "민준맘", "서연아빠", "돌봄천사", "슬기로운간병", "따뜻한마음", "케어왕", "하루한걸음", "정성가득",
+            "엄마사랑", "아빠파이팅", "굿케어", "편안한오후", "소중한하루", "미소천사", "함께해요", "든든한버팀목", "사랑으로", "오늘도맑음",
+            "꽃길만걷자", "healingday", "caremom", "나비효과", "초록우산", "달빛산책", "포근한이불", "감사한마음", "희망가득", "늘곁에",
+            "바른돌봄", "청춘간병", "웃음가득", "별빛하늘", "온기나눔", "착한손길", "하늘바라기", "참좋은날", "마음이음", "정다운맘"
+    };
 
     private static final String[] PATIENT_NAMES = {
             "김영자", "이순덕", "박말순", "최정례", "정복순", "한금례", "오분남", "윤옥자", "장귀례", "임순이"
@@ -118,14 +133,17 @@ public class DummyDataSeeder implements ApplicationRunner {
         List<User> result = new ArrayList<>();
         for (int i = 1; i <= count; i++) {
             String idx = String.format("%02d", i);
+            String realName = REAL_NAMES[userSeq];
+            String nickname = NICKNAMES[userSeq];
+            userSeq++;
             User user = User.builder()
                     .email(emailPrefix + idx + "@piuda.com")
                     .password(passwordEncoder.encode(COMMON_PASSWORD))
-                    .name(nickPrefix + idx)
-                    .nickname(nickPrefix + idx)
+                    .name(realName)
+                    .nickname(nickname)
                     .phone("010-" + String.format("%04d", random.nextInt(10000)) + "-" + String.format("%04d", random.nextInt(10000)))
                     .profileImageUrl("https://i.pravatar.cc/300?u=" + emailPrefix + idx)
-                    .introduction(nickPrefix + " 데모 계정입니다.")
+                    .introduction("안녕하세요, 잘 부탁드립니다 :)")
                     .role(role)
                     .build();
             user.addScore(random.nextInt(500)); // 랭킹 다양화 (기본 100 + 랜덤)
