@@ -20,6 +20,8 @@ import project.piuda.domain.community.domain.Comment;
 import project.piuda.domain.community.domain.CommentRepository;
 import project.piuda.domain.community.domain.Post;
 import project.piuda.domain.community.domain.PostCategory;
+import project.piuda.domain.community.domain.PostImage;
+import project.piuda.domain.community.domain.PostImageRepository;
 import project.piuda.domain.community.domain.PostRepository;
 import project.piuda.domain.patient.domain.*;
 import project.piuda.domain.patientmemory.domain.PatientMemory;
@@ -54,6 +56,7 @@ public class DummyDataSeeder implements ApplicationRunner {
     private final CareJudgmentLogRepository careJudgmentLogRepository;
     private final CareCalendarRepository careCalendarRepository;
     private final PostRepository postRepository;
+    private final PostImageRepository postImageRepository;
     private final CommentRepository commentRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -246,6 +249,15 @@ public class DummyDataSeeder implements ApplicationRunner {
                     .content("데모용 게시글 본문입니다. 치매 돌봄 관련 경험을 공유합니다.")
                     .category(categories[random.nextInt(categories.length)])
                     .build());
+
+            // 약 40% 게시글에 이미지 1~3장 첨부 (picsum 랜덤 이미지)
+            if (random.nextInt(10) < 4) {
+                int imageCount = 1 + random.nextInt(3);
+                for (int img = 0; img < imageCount; img++) {
+                    String url = "https://picsum.photos/seed/piuda" + i + "_" + img + "/600/400";
+                    postImageRepository.save(PostImage.builder().post(post).imageUrl(url).build());
+                }
+            }
 
             int commentCount = random.nextInt(5);
             for (int c = 0; c < commentCount; c++) {
