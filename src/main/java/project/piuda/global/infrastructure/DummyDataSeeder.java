@@ -124,6 +124,7 @@ public class DummyDataSeeder implements ApplicationRunner {
                     .name(nickPrefix + idx)
                     .nickname(nickPrefix + idx)
                     .phone("010-" + String.format("%04d", random.nextInt(10000)) + "-" + String.format("%04d", random.nextInt(10000)))
+                    .profileImageUrl("https://i.pravatar.cc/300?u=" + emailPrefix + idx)
                     .introduction(nickPrefix + " 데모 계정입니다.")
                     .role(role)
                     .build();
