@@ -264,7 +264,7 @@ public class DummyDataSeeder implements ApplicationRunner {
             User writer = all.get(random.nextInt(all.size()));
             Post post = postRepository.save(Post.builder()
                     .writer(writer)
-                    .title(POST_TITLES[i % POST_TITLES.length] + " (" + (i + 1) + ")")
+                    .title(POST_TITLES[random.nextInt(POST_TITLES.length)])
                     .content("데모용 게시글 본문입니다. 치매 돌봄 관련 경험을 공유합니다.")
                     .category(categories[random.nextInt(categories.length)])
                     .build());
