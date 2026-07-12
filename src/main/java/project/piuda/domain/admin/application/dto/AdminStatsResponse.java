@@ -11,5 +11,4 @@ public class AdminStatsResponse {
     private final long caregiverCount;
     private final long medicalStaffCount;
     private final long totalPosts;
-    private final long totalDevices;
 }

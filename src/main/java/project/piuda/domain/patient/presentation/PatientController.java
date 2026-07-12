@@ -95,31 +95,4 @@ public class PatientController {
         patientService.deletePatient(patientId, userDetails.getId());
         return ResponseEntity.ok().build();
     }
-
-    @Operation(summary = "디바이스 연동", description = "환자에게 IoT 디바이스를 연결합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "연동 성공"),
-            @ApiResponse(responseCode = "404", description = "환자 또는 디바이스 없음")
-    })
-    @PostMapping("/{patientId}/devices")
-    public ResponseEntity<Void> connectDevice(
-            @Parameter(description = "환자 ID") @PathVariable Long patientId,
-            @Parameter(description = "디바이스 시리얼 번호") @RequestParam String deviceSerial,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        patientService.connectDevice(patientId, userDetails.getId(), deviceSerial);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "디바이스 연동 해제", description = "환자에게 연결된 IoT 디바이스를 해제합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "연동 해제 성공"),
-            @ApiResponse(responseCode = "404", description = "환자 없음")
-    })
-    @DeleteMapping("/{patientId}/devices")
-    public ResponseEntity<Void> disconnectDevice(
-            @Parameter(description = "환자 ID") @PathVariable Long patientId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        patientService.disconnectDevice(patientId, userDetails.getId());
-        return ResponseEntity.ok().build();
-    }
 }

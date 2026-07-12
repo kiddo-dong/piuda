@@ -12,7 +12,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import project.piuda.domain.memorygallery.application.MemoryGalleryService;
-import project.piuda.domain.memorygallery.application.dto.AudioGalleryItem;
 import project.piuda.domain.memorygallery.application.dto.PhotoGalleryItem;
 
 import java.io.IOException;
@@ -41,7 +40,7 @@ public class MemoryGalleryController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "사진 갤러리 조회", description = "직접 업로드한 사진과 하루일지 첨부 사진을 모두 조회합니다.")
+    @Operation(summary = "사진 갤러리 조회", description = "환자 갤러리에 직접 업로드한 사진을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/photos")
     public ResponseEntity<List<PhotoGalleryItem>> getPhotoGallery(
@@ -62,29 +61,6 @@ public class MemoryGalleryController {
             @Parameter(description = "갤러리 항목 ID") @PathVariable Long galleryId,
             @AuthenticationPrincipal UserDetails userDetails) {
         memoryGalleryService.deletePhoto(galleryId, userDetails.getUsername());
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "음성 갤러리 조회", description = "IoT 디바이스가 녹음한 환자 음성 기록을 조회합니다.")
-    @ApiResponse(responseCode = "200", description = "조회 성공")
-    @GetMapping("/audio")
-    public ResponseEntity<List<AudioGalleryItem>> getAudioGallery(
-            @Parameter(description = "환자 ID") @PathVariable Long patientId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(memoryGalleryService.getAudioGallery(patientId, userDetails.getUsername()));
-    }
-
-    @Operation(summary = "음성 기록 삭제", description = "음성 기록을 삭제합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "음성 기록 없음")
-    })
-    @DeleteMapping("/audio/{audioId}")
-    public ResponseEntity<Void> deleteAudio(
-            @Parameter(description = "환자 ID") @PathVariable Long patientId,
-            @Parameter(description = "음성 기록 ID") @PathVariable Long audioId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        memoryGalleryService.deleteAudio(audioId, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 }

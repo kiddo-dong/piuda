@@ -16,5 +16,4 @@ public class PatientResponse {
     private Gender gender;
     private DementiaStage dementiaStage;
     private String inviteCode;
-    private String deviceSerial; // 디바이스가 연동된 경우 시리얼 번호 포함, 없으면 null
 }

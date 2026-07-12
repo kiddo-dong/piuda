@@ -4,9 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import project.piuda.domain.device.domain.VoiceRecord;
-import project.piuda.domain.device.domain.VoiceRecordRepository;
-import project.piuda.domain.memorygallery.application.dto.AudioGalleryItem;
 import project.piuda.domain.memorygallery.application.dto.PhotoGalleryItem;
 import project.piuda.domain.memorygallery.domain.MemoryGallery;
 import project.piuda.domain.memorygallery.domain.MemoryGalleryRepository;
@@ -32,7 +29,6 @@ import java.util.List;
 public class MemoryGalleryService {
 
     private final MemoryGalleryRepository memoryGalleryRepository;
-    private final VoiceRecordRepository voiceRecordRepository;
     private final PatientRepository patientRepository;
     private final PatientMemberRepository patientMemberRepository;
     private final UserRepository userRepository;
@@ -81,31 +77,12 @@ public class MemoryGalleryService {
         return items;
     }
 
-    public List<AudioGalleryItem> getAudioGallery(Long patientId, String userEmail) {
-        Patient patient = getPatient(patientId);
-        validatePatientAccess(patient, getUser(userEmail));
-
-        List<AudioGalleryItem> items = new ArrayList<>();
-        for (VoiceRecord voice : voiceRecordRepository.findAllByPatientIdOrderByRecordedAtDesc(patientId)) {
-            items.add(AudioGalleryItem.of(voice.getId(), voice.getAudioUrl(), voice.getRecordedAt()));
-        }
-        return items;
-    }
-
     @Transactional
     public void deletePhoto(Long galleryId, String userEmail) {
         MemoryGallery gallery = memoryGalleryRepository.findById(galleryId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 갤러리 항목입니다."));
         validatePatientAccess(gallery.getPatient(), getUser(userEmail));
         memoryGalleryRepository.delete(gallery);
-    }
-
-    @Transactional
-    public void deleteAudio(Long audioId, String userEmail) {
-        VoiceRecord voice = voiceRecordRepository.findById(audioId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 음성 기록입니다."));
-        validatePatientAccess(voice.getPatient(), getUser(userEmail));
-        voiceRecordRepository.delete(voice);
     }
 
     private Patient getPatient(Long patientId) {

@@ -8,9 +8,6 @@ import project.piuda.domain.careadvice.domain.CareAdviceMessageRepository;
 import project.piuda.domain.careadvice.domain.CareAdviceSession;
 import project.piuda.domain.careadvice.domain.CareAdviceSessionRepository;
 import project.piuda.domain.carejudgment.domain.CareJudgmentLogRepository;
-import project.piuda.domain.device.domain.Device;
-import project.piuda.domain.device.domain.DeviceRepository;
-import project.piuda.domain.device.domain.VoiceRecordRepository;
 import project.piuda.domain.memorygallery.domain.MemoryGalleryRepository;
 import project.piuda.domain.patientmemory.domain.PatientMemory;
 import project.piuda.domain.patientmemory.domain.PatientMemoryRepository;
@@ -37,35 +34,15 @@ import project.piuda.domain.user.domain.UserRepository;
 public class PatientService {
 
     private final PatientRepository patientRepository;
-    private final DeviceRepository deviceRepository;
     private final UserRepository userRepository;
     private final PatientMemberRepository patientMemberRepository;
     private final PatientMapper patientMapper;
     private final PatientMemoryRepository patientMemoryRepository;
     private final CareCalendarRepository careCalendarRepository;
     private final MemoryGalleryRepository memoryGalleryRepository;
-    private final VoiceRecordRepository voiceRecordRepository;
     private final CareAdviceSessionRepository careAdviceSessionRepository;
     private final CareAdviceMessageRepository careAdviceMessageRepository;
     private final CareJudgmentLogRepository careJudgmentLogRepository;
-
-    @Transactional
-    public void disconnectDevice(Long patientId, Long userId) {
-        Patient patient = getPatient(patientId);
-        User user = getUserById(userId);
-        validatePatientAccess(patient, user);
-        patient.removeDevice();
-    }
-
-    @Transactional
-    public void connectDevice(Long patientId, Long userId, String deviceSerial) {
-        Patient patient = getPatient(patientId);
-        User user = getUserById(userId);
-        validatePatientAccess(patient, user);
-        Device device = deviceRepository.findByDeviceSerial(deviceSerial)
-                .orElseThrow(() -> new NotFoundException("등록되지 않은 디바이스 시리얼입니다."));
-        patient.assignDevice(device);
-    }
 
     @Transactional
     public PatientResponse registerPatient(PatientCreateRequest request, Long protectorId) {
@@ -130,9 +107,6 @@ public class PatientService {
         User user = getUserById(userId);
         validatePatientAccess(patient, user);
 
-        // 환자가 보유한 디바이스 연결 해제 (patient 테이블의 device_id FK)
-        patient.removeDevice();
-
         // AI 케어 어드바이스 (메시지 → 세션)
         List<CareAdviceSession> sessions = careAdviceSessionRepository.findAllByPatientId(patientId);
         if (!sessions.isEmpty()) {
@@ -145,9 +119,6 @@ public class PatientService {
 
         // 케어 판단 기록
         careJudgmentLogRepository.deleteAllByPatientId(patientId);
-
-        // 음성 녹음
-        voiceRecordRepository.deleteAllByPatientId(patientId);
 
         // 기억 갤러리
         memoryGalleryRepository.deleteAllByPatientId(patientId);

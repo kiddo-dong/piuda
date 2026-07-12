@@ -65,22 +65,6 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "전체 기기 목록 조회", description = "등록된 모든 IoT 기기와 연동 환자 정보를 반환합니다.")
-    @ApiResponse(responseCode = "200", description = "조회 성공")
-    @GetMapping("/devices")
-    public ResponseEntity<List<AdminDeviceResponse>> getDevices() {
-        return ResponseEntity.ok(adminService.getDevices());
-    }
-
-    @Operation(summary = "기기 강제 삭제", description = "특정 기기를 삭제합니다. 연동된 환자가 있으면 자동 해제됩니다.")
-    @ApiResponse(responseCode = "200", description = "삭제 성공")
-    @DeleteMapping("/devices/{deviceId}")
-    public ResponseEntity<Void> deleteDevice(
-            @Parameter(description = "삭제할 기기 ID") @PathVariable Long deviceId) {
-        adminService.deleteDevice(deviceId);
-        return ResponseEntity.ok().build();
-    }
-
     @Operation(summary = "신고 목록 조회", description = "처리 대기 중(PENDING)인 신고 목록을 최신순으로 페이징 조회합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/reports")

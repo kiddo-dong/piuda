@@ -11,12 +11,7 @@ import project.piuda.domain.community.domain.Comment;
 import project.piuda.domain.community.domain.CommentRepository;
 import project.piuda.domain.community.domain.Post;
 import project.piuda.domain.community.domain.PostRepository;
-import project.piuda.domain.device.application.DeviceService;
-import project.piuda.domain.device.domain.Device;
-import project.piuda.domain.device.domain.DeviceRepository;
 import project.piuda.domain.user.application.UserService;
-import project.piuda.domain.patient.domain.Patient;
-import project.piuda.domain.patient.domain.PatientRepository;
 import project.piuda.domain.report.application.dto.AdminReportResponse;
 import project.piuda.domain.report.domain.Report;
 import project.piuda.domain.report.domain.ReportRepository;
@@ -37,12 +32,9 @@ public class AdminService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
-    private final DeviceRepository deviceRepository;
-    private final PatientRepository patientRepository;
     private final ReportRepository reportRepository;
     private final UserService userService;
     private final PostService postService;
-    private final DeviceService deviceService;
 
     public Page<AdminUserResponse> getUsers(int page, int size) {
         return userRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size))
@@ -71,31 +63,13 @@ public class AdminService {
         postService.forceDeletePost(post);
     }
 
-    public List<AdminDeviceResponse> getDevices() {
-        return deviceRepository.findAll().stream()
-                .map(device -> {
-                    String patientName = patientRepository.findByDeviceDeviceSerial(device.getDeviceSerial())
-                            .map(Patient::getName)
-                            .orElse(null);
-                    return new AdminDeviceResponse(device, patientName);
-                })
-                .toList();
-    }
-
-    @Transactional
-    public void deleteDevice(Long deviceId) {
-        // 환자 연결 해제 + TTS 메시지 정리 후 삭제 (DeviceService에 위임)
-        deviceService.deleteDevice(deviceId);
-    }
-
     public AdminStatsResponse getStats() {
         return new AdminStatsResponse(
                 userRepository.count(),
                 userRepository.countByRole(Role.PROTECTOR),
                 userRepository.countByRole(Role.CAREGIVER),
                 userRepository.countByRole(Role.MEDICAL_STAFF),
-                postRepository.count(),
-                deviceRepository.count()
+                postRepository.count()
         );
     }
 

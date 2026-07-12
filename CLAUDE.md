@@ -71,7 +71,6 @@ domain/<name>/
 |--------|------|
 | `user` | 회원가입/로그인. Role: `PROTECTOR`(보호자) / `CAREGIVER`(간병인) / `MEDICAL_STAFF`(의료진) |
 | `patient` | 환자 등록. 보호자-환자 N:M 매핑은 `PatientMember` 중간 테이블 사용 |
-| `device` | ESP32 IoT 디바이스 등록 및 환자 연동 |
 | `calendar` | 케어 일정 관리. `CalendarType`: `SCHEDULE`(수동 등록) |
 | `patientmemory` | 환자 1인당 1개의 신상/의료 정보 레코드. 환자 등록 시 빈 레코드 자동 생성 |
 | `memorygallery` | 환자별 사진 갤러리. S3 URL을 저장하며 Writer(User) 참조를 가짐 |
@@ -115,7 +114,7 @@ resources/knowledge/*.pdf, *.json
 
 ## 인증
 
-- 인증 불필요 엔드포인트: `POST /api/v1/users/login`, `POST /api/v1/users/signup`, `POST /api/v1/users/refresh`, `POST /api/v1/devices`, `POST /api/v1/devices/*/voice`, `GET /api/v1/posts`, `GET /api/v1/posts/*`, `GET /api/v1/posts/*/comments`, `POST /api/v1/auth/*`
+- 인증 불필요 엔드포인트: `POST /api/v1/users/login`, `POST /api/v1/users/signup`, `POST /api/v1/users/refresh`, `POST /api/v1/users/check-nickname`, `GET /api/v1/posts`, `GET /api/v1/posts/*`, `GET /api/v1/posts/*/comments`, `POST /api/v1/auth/*`
 - 나머지 모든 엔드포인트는 `Authorization: Bearer <JWT>` 헤더 필요
 - JWT에는 `userId`, `email`, `role` 클레임이 포함된다
 
