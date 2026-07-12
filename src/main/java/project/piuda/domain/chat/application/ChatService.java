@@ -17,7 +17,9 @@ import project.piuda.global.infrastructure.FcmService;
 import project.piuda.global.infrastructure.S3UploadService;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,11 +57,17 @@ public class ChatService {
 
     public List<ChatRoomResponse> getMyRooms(String userEmail) {
         User me = getUser(userEmail);
-        return chatRoomRepository.findAllByUserOrderByLastMessage(me).stream()
-                .map(room -> {
-                    long unread = chatMessageRepository.countByChatRoomAndSenderNotAndIsReadFalse(room, me);
-                    return new ChatRoomResponse(room, me, unread);
-                })
+        List<ChatRoom> rooms = chatRoomRepository.findAllByUserOrderByLastMessage(me);
+        if (rooms.isEmpty()) return List.of();
+
+        // 방별 안읽음 수를 한 번의 그룹 쿼리로 집계 (N+1 방지)
+        Map<Long, Long> unreadByRoom = new HashMap<>();
+        for (Object[] row : chatMessageRepository.countUnreadGroupedByRoom(rooms, me)) {
+            unreadByRoom.put((Long) row[0], (Long) row[1]);
+        }
+
+        return rooms.stream()
+                .map(room -> new ChatRoomResponse(room, me, unreadByRoom.getOrDefault(room.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 

@@ -17,6 +17,12 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     long countByChatRoomAndSenderNotAndIsReadFalse(ChatRoom chatRoom, User sender);
 
+    // 여러 채팅방의 안읽음 수를 한 번에 집계 (getMyRooms N+1 방지) — [roomId, count]
+    @Query("SELECT m.chatRoom.id, COUNT(m) FROM ChatMessage m " +
+           "WHERE m.chatRoom IN :rooms AND m.sender <> :me AND m.isRead = false " +
+           "GROUP BY m.chatRoom.id")
+    List<Object[]> countUnreadGroupedByRoom(@Param("rooms") List<ChatRoom> rooms, @Param("me") User me);
+
     @Modifying
     @Query("UPDATE ChatMessage m SET m.isRead = true " +
            "WHERE m.chatRoom = :room AND m.sender <> :reader AND m.isRead = false")

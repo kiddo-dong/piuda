@@ -8,6 +8,7 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
@@ -40,10 +41,13 @@ public class FcmService {
         this.firebaseApp = app;
     }
 
+    @Async
     public void send(String fcmToken, String title, String body) {
         send(fcmToken, title, body, null);
     }
 
+    // 외부 HTTP 호출이므로 요청 스레드/트랜잭션을 점유하지 않도록 비동기 처리
+    @Async
     public void send(String fcmToken, String title, String body, Long roomId) {
         if (firebaseApp == null || fcmToken == null) return;
         try {
